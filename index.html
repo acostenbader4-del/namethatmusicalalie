@@ -910,7 +910,7 @@ function songKey(musical, song) {
 // ══════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════
-let db, gameRef, playersRef, roundRef, subsRef, lyricsRef, customSongsRef;
+let db, gameRef, playersRef, roundRef, subsRef, lyricsRef, customSongsRef, correctionsRef;
 let gameCode = '', playerId = '', playerName = '', isHost = false;
 let currentRound = 0, totalRounds = 10;
 let revealedCount = 0;
@@ -938,6 +938,21 @@ function initFirebase() {
     });
     lyricsRef = db.ref('lyrics');
     lyricsRef.on('value', snap => { allLyrics = snap.val() || {}; });
+    correctionsRef = db.ref('corrections');
+    correctionsRef.on('value', snap => {
+      const corrections = snap.val() || {};
+      // Apply saved corrections to SONG_POOL on load
+      Object.values(corrections).forEach(c => {
+        const idx = SONG_POOL.findIndex(p => p.musical === c.origMusical && p.song === c.origSong);
+        if (idx !== -1) {
+          SONG_POOL[idx].musical = c.newMusical;
+          SONG_POOL[idx].song    = c.newSong;
+          SONG_POOL[idx]._correctionKey = c.correctionKey;
+        }
+      });
+      refreshHostDropdown();
+    });
+
     customSongsRef = db.ref('customSongs');
     customSongsRef.on('value', snap => {
       const custom = snap.val() || {};
@@ -1652,6 +1667,11 @@ function saveEditSong() {
     // Update SONG_POOL entry
     const idx = SONG_POOL.findIndex(p => p.musical === origMusical && p.song === origSong);
     if (idx !== -1) { SONG_POOL[idx].musical = newMusical; SONG_POOL[idx].song = newSong; }
+    // Also update lyrics key in allLyrics cache if key changed
+    if (newKey !== origKey && allLyrics[origKey]) {
+      allLyrics[newKey] = allLyrics[origKey];
+      delete allLyrics[origKey];
+    }
 
     closeEditModal();
     filterEditor();
@@ -1667,8 +1687,13 @@ function saveEditSong() {
     customSongsRef.child(fbKey).update({ musical: newMusical, song: newSong }).then(doUpdate)
       .catch(e => { errEl.textContent = 'Firebase error: ' + e.message; errEl.style.display = 'block'; });
   } else {
-    // Hardcoded song — just update locally (persisted via Firebase lyrics key move)
-    doUpdate();
+    // Hardcoded song — save correction to Firebase so it persists across all devices
+    const entry = SONG_POOL.find(p => p.musical === origMusical && p.song === origSong);
+    const corrKey = (entry && entry._correctionKey) || correctionsRef.push().key;
+    const corrData = { origMusical, origSong, newMusical, newSong, correctionKey: corrKey };
+    correctionsRef.child(corrKey).set(corrData)
+      .then(doUpdate)
+      .catch(e => { errEl.textContent = 'Firebase error: ' + e.message; errEl.style.display = 'block'; });
   }
 }
 
@@ -1690,6 +1715,10 @@ function deleteSong() {
 
   // Remove from customSongs if it's a custom entry
   if (fbKey) customSongsRef.child(fbKey).remove();
+
+  // Remove from corrections if it was a corrected hardcoded entry
+  const entry2 = SONG_POOL.find(p => p.musical === origMusical && p.song === origSong);
+  if (entry2 && entry2._correctionKey) correctionsRef.child(entry2._correctionKey).remove();
 
   closeEditModal();
   filterEditor();
