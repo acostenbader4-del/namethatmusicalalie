@@ -521,6 +521,8 @@ body>*{position:relative;z-index:1;}
 <script>
 const FB_CONFIG={apiKey:"AIzaSyB9j3e0nLqCIfeL-MBuxGGySRH_GqBq2eU",authDomain:"namethatmusical-4f26b.firebaseapp.com",databaseURL:"https://namethatmusical-4f26b-default-rtdb.firebaseio.com",projectId:"namethatmusical-4f26b",storageBucket:"namethatmusical-4f26b.firebasestorage.app",messagingSenderId:"52948074317",appId:"1:52948074317:web:9af6e972fe9e3f05890104",measurementId:"G-QZYE4G8LJ7"};
 
+
+
 let SONG_POOL=[
 {musical:"Hamilton",song:"Alexander Hamilton"},{musical:"Hamilton",song:"My Shot"},{musical:"Hamilton",song:"The Room Where It Happens"},{musical:"Hamilton",song:"You'll Be Back"},{musical:"Hamilton",song:"Wait for It"},{musical:"Hamilton",song:"Satisfied"},{musical:"Hamilton",song:"Burn"},{musical:"Hamilton",song:"Helpless"},{musical:"Hamilton",song:"Guns and Ships"},{musical:"Hamilton",song:"Dear Theodosia"},{musical:"Hamilton",song:"Your Obedient Servant"},{musical:"Hamilton",song:"Ten Duel Commandments"},{musical:"Hamilton",song:"Non-Stop"},{musical:"Hamilton",song:"The Schuyler Sisters"},{musical:"Hamilton",song:"Say No to This"},{musical:"Hamilton",song:"Sincerely, Me"},
 {musical:"Dear Evan Hansen",song:"You Will Be Found"},{musical:"Dear Evan Hansen",song:"If I Could Tell Her"},{musical:"Dear Evan Hansen",song:"For Forever"},{musical:"Dear Evan Hansen",song:"Good For You"},{musical:"Dear Evan Hansen",song:"Anybody Have a Map?"},
@@ -626,7 +628,7 @@ function startHostLobby(){
   playersRef=db.ref('games/'+gameCode+'/players');
   roundRef=db.ref('games/'+gameCode+'/round');
   subsRef=db.ref('games/'+gameCode+'/submissions');
-  gameRef.set({status:'lobby',round:{number:1,total:totalRounds,revealed:0,ready:false,answerShown:false}});
+  gameRef.set({status:'lobby',round:{number:1,revealed:0,ready:false,answerShown:false}});
   document.getElementById('lobby-code').textContent=gameCode;
   document.getElementById('qrcode').innerHTML='';
   const joinUrl=location.href.split('?')[0]+'?code='+gameCode;
