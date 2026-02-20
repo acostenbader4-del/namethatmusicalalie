@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🎭 Name That Musical!</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* ─── RESET & BASE ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:       #0e0b14;
+  --ink2:      #1c1728;
+  --ink3:      #2a233d;
+  --velvet:    #38305a;
+  --gold:      #e8b84b;
+  --gold2:     #f5d27a;
+  --cream:     #f7f0e0;
+  --muted:     #8b80a6;
+  --border:    rgba(232,184,75,.18);
+  --border2:   rgba(232,184,75,.35);
+  --green:     #2ecc71;
+  --red:       #e74c3c;
+  --r:         14px;
+  --r2:        22px;
+}
+html { font-size: 16px; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--ink);
+  color: var(--cream);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── BACKGROUND TEXTURE ─── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(90,60,160,.35) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(180,100,40,.18) 0%, transparent 60%);
+  pointer-events: none;
+}
+body > * { position: relative; z-index: 1; }
+
+/* ─── FIREBASE BANNER ─── */
+#fb-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 9px 16px;
+  font-size: .82rem; font-weight: 500; letter-spacing: .5px;
+  transition: opacity .5s ease, transform .5s ease;
+}
+#fb-banner.connecting { background: rgba(30,20,60,.95); color: var(--muted); border-bottom: 1px solid var(--border); }
+#fb-banner.connected  { background: rgba(20,60,30,.95); color: #5ef09a; border-bottom: 1px solid rgba(46,204,113,.3); }
+#fb-banner.error      { background: rgba(60,20,20,.95); color: #f88; border-bottom: 1px solid rgba(231,76,60,.3); }
+#fb-banner.hidden     { opacity: 0; transform: translateY(-100%); pointer-events: none; }
+.fb-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.fb-dot.pulse { animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ─── SCREENS ─── */
+.screen { display: none; min-height: 100vh; padding: 20px 16px 40px; }
+.screen.active { display: flex; flex-direction: column; align-items: center; }
+.pt-banner { padding-top: 52px; }
+
+/* ─── LOGO ─── */
+.logo-wrap { text-align: center; margin-bottom: 6px; }
+.logo-eyebrow { font-size: .72rem; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.4rem, 8vw, 4rem);
+  font-weight: 700; line-height: 1;
+  color: var(--gold);
+  text-shadow: 0 0 40px rgba(232,184,75,.25);
+}
+.logo em { color: var(--cream); font-style: italic; }
+.logo-sub { color: var(--muted); font-size: .82rem; margin-top: 6px; letter-spacing: 1px; }
+
+/* ─── CARDS ─── */
+.card {
+  background: var(--ink2);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 28px 24px;
+  width: 100%; max-width: 440px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.4);
+}
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem; color: var(--gold);
+  margin-bottom: 20px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* ─── FIELDS ─── */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block; margin-bottom: 7px;
+  font-size: .72rem; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted);
+}
+.field input, .field select, .field textarea {
+  width: 100%; padding: 12px 14px;
+  background: var(--ink); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--cream);
+  font-family: 'Outfit', sans-serif; font-size: .95rem;
+  outline: none; transition: border-color .2s;
+  -webkit-appearance: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+.field select option, .field select optgroup { background: var(--ink); }
+.field textarea { resize: vertical; line-height: 1.55; min-height: 80px; }
+
+/* ─── BUTTONS ─── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 13px 22px; border-radius: var(--r);
+  border: none; cursor: pointer;
+  font-family: 'Outfit', sans-serif; font-size: .9rem; font-weight: 600;
+  letter-spacing: .5px; transition: all .18s;
+  text-decoration: none;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+.btn-full { width: 100%; }
+.btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--ink); }
+.btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,184,75,.35); }
+.btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--cream); }
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-ghost { background: transparent; color: var(--muted); }
+.btn-ghost:hover { color: var(--cream); }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-success { background: var(--green); color: #fff; }
+.btn-sm { padding: 8px 14px; font-size: .8rem; }
+
+/* ─── LANDING ─── */
+#landing-screen { justify-content: center; gap: 0; }
+#landing-screen .logo-wrap { margin-bottom: 48px; }
+.role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 440px; }
+.role-card {
+  background: var(--ink2); border: 1px solid var(--border);
+  border-radius: var(--r2); padding: 28px 18px;
+  cursor: pointer; text-align: center;
+  transition: all .2s; display: flex; flex-direction: column;
+  align-items: center; gap: 10px;
+}
+.role-card:hover { border-color: var(--gold2); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.35); }
+.role-icon { font-size: 2.4rem; }
+.role-label { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--gold); }
+.role-desc { font-size: .78rem; color: var(--muted); line-height: 1.45; }
+.landing-or { width: 100%; max-width: 440px; text-align: center; color: var(--muted); font-size: .8rem; margin: 4px 0; }
+
+/* ─── HOST: LOBBY ─── */
+.lobby-layout { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 860px; }
+@media(min-width: 700px) { .lobby-layout { flex-direction: row; } }
+.lobby-main { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+.lobby-side { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 14px; }
+.qr-wrapper { background: white; border-radius: 10px; padding: 12px; display: inline-block; }
+.game-code-big {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem; letter-spacing: 10px; color: var(--gold2);
+  text-align: center; margin: 4px 0;
+}
+.player-chips { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+.chip {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--ink3); border-radius: 10px; padding: 10px 14px;
+  animation: slideIn .25s ease;
+}
+@keyframes slideIn { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:none} }
+.chip-av {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--gold), #8b4513);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .82rem; color: var(--ink);
+}
+.chip-name { font-weight: 500; font-size: .9rem; }
+.chip-score { margin-left: auto; font-size: .82rem; color: var(--gold); font-weight: 600; }
+.no-players { color: var(--muted); font-size: .85rem; text-align: center; padding: 28px 0; }
+.count-badge {
+  background: rgba(232,184,75,.12); border: 1px solid var(--border);
+  border-radius: 100px; padding: 3px 11px;
+  font-size: .75rem; color: var(--gold);
+}
+
+/* ─── GAME SCREEN (HOST) ─── */
+.game-layout { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 960px; }
+@media(min-width: 760px) { .game-layout { flex-direction: row; } }
+.game-main { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+.game-side { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+@media(min-width: 760px) { .game-side { max-width: 290px; } }
+
+.lyric-reveal-card {
+  background: var(--ink3); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px 20px;
+  position: relative; transition: all .35s ease;
+}
+.lyric-reveal-card.revealed {
+  border-color: rgba(232,184,75,.55);
+  background: rgba(232,184,75,.07);
+}
+.lyric-reveal-card.locked-card { opacity: .3; }
+.lyric-num-row {
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: 8px;
+  font-size: .7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted);
+}
+.pt-chip {
+  background: var(--gold); color: var(--ink);
+  font-weight: 700; border-radius: 100px;
+  padding: 2px 8px; font-size: .68rem;
+}
+.lyric-body {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.08rem; font-style: italic; line-height: 1.65;
+}
+.lyric-hidden { font-size: .85rem; color: var(--muted); font-style: italic; }
+
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* submission list */
+.sub-list { display: flex; flex-direction: column; gap: 7px; max-height: 260px; overflow-y: auto; }
+.sub-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--ink3); border-radius: 8px; padding: 9px 12px;
+  font-size: .82rem; border-left: 3px solid transparent;
+}
+.sub-item.correct  { border-color: var(--green); }
+.sub-item.wrong    { border-color: var(--red); }
+.sub-item.pending  { border-color: var(--muted); }
+.sub-name  { font-weight: 600; min-width: 70px; }
+.sub-guess { color: var(--muted); flex: 1; font-size: .75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub-pts   { font-weight: 700; color: var(--gold); margin-left: auto; }
+
+/* scoreboard rows */
+.score-rows { display: flex; flex-direction: column; }
+.score-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.score-rank { font-size: .75rem; color: var(--muted); width: 18px; }
+.score-pts  { font-weight: 700; color: var(--gold); margin-left: auto; }
+
+/* answer reveal */
+.answer-box {
+  background: var(--ink3); border-radius: var(--r); padding: 12px 14px; margin-bottom: 10px;
+}
+.a-label { font-size: .68rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 3px; }
+.a-val { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; color: var(--gold2); }
+
+/* ─── PLAYER: GAME ─── */
+.player-game-wrap { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 14px; }
+
+.lyric-player-card {
+  background: var(--ink2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 16px 18px;
+  transition: all .4s ease;
+}
+.lyric-player-card.revealed {
+  border-color: rgba(232,184,75,.5);
+  background: rgba(232,184,75,.06);
+  animation: lyricPop .4s ease;
+}
+@keyframes lyricPop { 0%{transform:scale(.97);opacity:.7} 60%{transform:scale(1.015)} 100%{transform:scale(1);opacity:1} }
+
+.pts-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 12px; }
+.pts-btn {
+  padding: 11px 4px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--ink);
+  cursor: pointer; text-align: center; transition: all .15s;
+}
+.pts-btn-val { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--gold2); display: block; }
+.pts-btn-lbl { font-size: .6rem; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+.pts-btn.sel { background: rgba(232,184,75,.15); border-color: var(--gold); }
+.pts-btn.dim { opacity: .3; pointer-events: none; }
+
+.locked-box {
+  background: rgba(46,204,113,.08); border: 1px solid rgba(46,204,113,.35);
+  border-radius: var(--r); padding: 16px; text-align: center;
+}
+.locked-box .lbig { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--gold2); margin: 6px 0 2px; }
+.locked-box .lsub { font-size: .78rem; color: var(--muted); }
+
+/* round result */
+.res-circle {
+  width: 88px; height: 88px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.2rem; margin: 0 auto 14px;
+}
+.res-correct { background: rgba(46,204,113,.15); border: 2px solid var(--green); }
+.res-wrong   { background: rgba(231,76,60,.15);  border: 2px solid var(--red); }
+.res-noans   { background: rgba(139,128,166,.1); border: 2px solid var(--muted); }
+.res-pts { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; color: var(--gold); margin: 0; }
+.res-total { font-size: .82rem; color: var(--muted); margin-bottom: 16px; }
+
+/* ─── LYRICS EDITOR ─── */
+.editor-grid { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 14px; }
+.song-row {
+  background: var(--ink2); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+}
+.song-row-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; cursor: pointer; gap: 10px;
+  border-bottom: 1px solid transparent; transition: border-color .2s;
+}
+.song-row-header:hover { border-color: var(--border); }
+.song-row-header.open { border-bottom-color: var(--border); }
+.song-row-info { flex: 1; }
+.song-row-title { font-weight: 600; font-size: .92rem; }
+.song-row-musical { font-size: .75rem; color: var(--muted); }
+.song-row-status { font-size: .72rem; border-radius: 100px; padding: 3px 10px; }
+.has-lyrics  { background: rgba(46,204,113,.1); color: #5ef09a; border: 1px solid rgba(46,204,113,.3); }
+.no-lyrics   { background: rgba(231,76,60,.1);  color: #f88; border: 1px solid rgba(231,76,60,.3); }
+.song-row-body { display: none; padding: 16px; }
+.song-row-body.open { display: block; }
+.lyric-inputs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.lyric-input-row { display: flex; align-items: center; gap: 8px; }
+.lyric-input-row .pt-label {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); width: 50px; flex-shrink: 0; text-align: right;
+}
+.lyric-input-row input {
+  flex: 1; padding: 9px 12px; background: var(--ink);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--cream); font-family: 'Outfit', sans-serif; font-size: .87rem; outline: none;
+}
+.lyric-input-row input:focus { border-color: var(--gold); }
+.editor-filter {
+  width: 100%; max-width: 800px;
+  padding: 10px 14px; background: var(--ink2);
+  border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--cream); font-family: 'Outfit', sans-serif; font-size: .92rem; outline: none;
+  margin-bottom: 4px;
+}
+.editor-filter:focus { border-color: var(--gold); }
+
+/* ─── WAITING / ENDED ─── */
+.spin {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: 3px solid var(--border2); border-top-color: var(--gold);
+  animation: spin 1.1s linear infinite; margin: 0 auto 24px;
+}
+@keyframes spin { to{ transform: rotate(360deg); } }
+.podium-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 12px; margin: 32px 0; max-width: 380px; }
+.podium-col { flex: 1; border-radius: 12px 12px 0 0; text-align: center; padding: 16px 8px 14px; }
+.p1 { background: linear-gradient(180deg,#d4af37,#8b6914); min-height: 150px; }
+.p2 { background: linear-gradient(180deg,#9ba0aa,#5c6270); min-height: 110px; }
+.p3 { background: linear-gradient(180deg,#cd7f32,#7a4a1c); min-height: 80px; }
+.p-medal { font-size: 1.6rem; }
+.p-name  { font-weight: 700; font-size: .85rem; color: #fff; margin-top: 4px; }
+.p-pts   { font-size: .75rem; color: rgba(255,255,255,.75); }
+
+/* ─── UTIL ─── */
+.sep { height: 1px; background: var(--border); margin: 14px 0; }
+.muted { color: var(--muted); }
+.small { font-size: .8rem; }
+.center { text-align: center; }
+.mt8  { margin-top: 8px; }
+.mt14 { margin-top: 14px; }
+.mt24 { margin-top: 24px; }
+.w100 { width: 100%; }
+.round-pill {
+  background: var(--ink2); border: 1px solid var(--border);
+  border-radius: 100px; padding: 5px 16px;
+  font-size: .8rem; color: var(--muted); margin-bottom: 16px;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ─── HOST PASSWORD MODAL ─── */
+.overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.overlay.hidden { display: none; }
+.modal {
+  background: var(--ink2); border: 1px solid var(--border2);
+  border-radius: var(--r2); padding: 32px 28px; width: 100%; max-width: 360px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.6); text-align: center;
+}
+.modal-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--gold); margin-bottom: 8px; }
+.modal-sub   { font-size: .82rem; color: var(--muted); margin-bottom: 20px; }
+
+/* ─── RESPONSIVE TWEAKS ─── */
+@media(max-width: 500px) {
+  .card { padding: 20px 16px; }
+  .pts-btn-val { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════ FIREBASE BANNER ════════════════ -->
+<div id="fb-banner" class="connecting hidden">
+  <div class="fb-dot pulse"></div>
+  <span id="fb-banner-text">Connecting to Firebase…</span>
+</div>
+
+<!-- ════════════════════════ HOST PASSWORD OVERLAY ══════════ -->
+<div id="host-modal" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-title">🎬 Host Access</div>
+    <div class="modal-sub">Enter the host password to continue</div>
+    <div class="field"><input type="password" id="host-pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkHostPw()" /></div>
+    <button class="btn btn-gold btn-full" onclick="checkHostPw()">Enter</button>
+    <button class="btn btn-ghost btn-full mt8" onclick="hideHostModal()">Cancel</button>
+    <div id="host-pw-error" class="small muted center mt8" style="display:none;color:var(--red)">Wrong password</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 1: LANDING
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-landing" class="screen active pt-banner">
+  <div class="logo-wrap mt24">
+    <div class="logo-eyebrow">🎭 trivia night</div>
+    <div class="logo">Name That <em>Musical!</em></div>
+    <div class="logo-sub">Guess the song from the lyrics</div>
+  </div>
+  <div style="height:36px"></div>
+  <div class="role-grid">
+    <div class="role-card" onclick="clickHost()">
+      <div class="role-icon">🎬</div>
+      <div class="role-label">Host</div>
+      <div class="role-desc">Run the game, reveal lyrics & control rounds</div>
+    </div>
+    <div class="role-card" onclick="go('screen-join')">
+      <div class="role-icon">🎤</div>
+      <div class="role-label">Player</div>
+      <div class="role-desc">Join a game and guess the songs</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 2: PLAYER JOIN
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-join" class="screen pt-banner">
+  <div class="logo-wrap">
+    <div class="logo" style="font-size:1.8rem">Name That <em>Musical!</em></div>
+  </div>
+  <div style="height:28px"></div>
+  <div class="card">
+    <div class="card-title">Join a Game</div>
+    <div class="field">
+      <label>Game Code</label>
+      <input type="text" id="join-code" maxlength="6" placeholder="ABC12"
+        style="text-transform:uppercase;letter-spacing:5px;font-size:1.3rem;text-align:center"
+        oninput="this.value=this.value.toUpperCase()" />
+    </div>
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="join-name" maxlength="20" placeholder="Your nickname" />
+    </div>
+    <button class="btn btn-gold btn-full mt8" onclick="joinGame()">🎟 Join Game</button>
+    <div id="join-error" class="small center mt8" style="color:var(--red);display:none"></div>
+    <div class="sep"></div>
+    <button class="btn btn-ghost btn-full btn-sm" onclick="go('screen-landing')">← Back</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 3: HOST LOBBY
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-host-lobby" class="screen pt-banner">
+  <div class="logo-wrap" style="width:100%;max-width:860px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <div class="logo" style="font-size:1.5rem">Name That <em>Musical!</em></div>
+    <span class="count-badge">HOST</span>
+  </div>
+  <div class="lobby-layout">
+    <div class="lobby-main">
+      <div class="card" style="max-width:none">
+        <div class="card-title">
+          <span>Lobby — Waiting for Players</span>
+          <span class="count-badge" id="lobby-count">0 joined</span>
+        </div>
+        <div id="lobby-player-list" class="player-chips">
+          <div class="no-players">Share the code or QR — players will appear here!</div>
+        </div>
+        <div class="sep"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-gold" style="flex:1" onclick="startGame()">🎬 Start Game</button>
+          <button class="btn btn-outline btn-sm" onclick="go('screen-lyrics-editor')">✏️ Edit Lyrics</button>
+        </div>
+      </div>
+    </div>
+    <div class="lobby-side">
+      <div class="card">
+        <div class="card-title" style="justify-content:center">Game Code</div>
+        <div class="game-code-big" id="lobby-code">—</div>
+        <div class="small muted center" style="margin-bottom:14px">Players enter this code to join</div>
+        <div class="sep"></div>
+        <div style="text-align:center;margin-bottom:10px">
+          <div class="qr-wrapper"><div id="qrcode"></div></div>
+        </div>
+        <div id="join-url-text" class="small muted center" style="word-break:break-all;margin-bottom:10px"></div>
+        <button class="btn btn-outline btn-sm btn-full" onclick="copyLink()">📋 Copy Join Link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 4: HOST GAME
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-host-game" class="screen pt-banner">
+  <div style="width:100%;max-width:960px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div class="logo" style="font-size:1.3rem">Name That <em>Musical!</em></div>
+    <div class="round-pill" style="margin:0">Round <span id="host-round-num">1</span> of <span id="host-round-total">10</span></div>
+    <span class="count-badge">HOST</span>
+  </div>
+  <div class="game-layout">
+    <div class="game-main">
+      <!-- Song selector -->
+      <div class="card" style="max-width:none">
+        <div class="card-title">Select This Round's Song</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="field" style="margin:0">
+            <label>Musical</label>
+            <select id="host-musical-sel" onchange="hostMusicalChange()">
+              <option value="">— Choose a musical —</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0">
+            <label>Song</label>
+            <select id="host-song-sel" onchange="hostSongChange()" disabled>
+              <option value="">— Choose a song —</option>
+            </select>
+          </div>
+          <button class="btn btn-gold" id="load-song-btn" onclick="loadSong()" disabled>📜 Load Song</button>
+        </div>
+      </div>
+      <!-- Lyrics reveal -->
+      <div class="card" id="lyrics-host-panel" style="max-width:none;display:none">
+        <div class="card-title">
+          <span>Lyrics</span>
+          <span class="small muted" id="host-song-label"></span>
+        </div>
+        <div id="host-lyrics-area" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px"></div>
+        <div class="btn-row">
+          <button class="btn btn-outline" id="reveal-next-btn" onclick="revealNext()" style="flex:1">👁 Reveal Next</button>
+          <button class="btn btn-success" onclick="showAnswer()" style="flex:1">✅ Show Answer</button>
+          <button class="btn btn-gold" onclick="nextRound()" style="flex:1">⏭ Next Round</button>
+        </div>
+      </div>
+    </div>
+    <div class="game-side">
+      <!-- Answer reveal -->
+      <div class="card">
+        <div class="card-title">Submissions</div>
+        <div id="host-answer-reveal" style="display:none;margin-bottom:12px">
+          <div class="answer-box"><div class="a-label">Musical</div><div class="a-val" id="ans-musical-reveal">—</div></div>
+          <div class="answer-box"><div class="a-label">Song</div><div class="a-val" id="ans-song-reveal">—</div></div>
+        </div>
+        <div class="sub-list" id="host-sub-list">
+          <div class="muted small" style="padding:8px 0">Waiting for players to lock in…</div>
+        </div>
+      </div>
+      <!-- Scoreboard -->
+      <div class="card">
+        <div class="card-title">Scoreboard</div>
+        <div class="score-rows" id="host-scoreboard"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 5: PLAYER WAITING
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-player-waiting" class="screen" style="justify-content:center;gap:0">
+  <div class="spin"></div>
+  <div class="logo" style="font-size:1.6rem;margin-bottom:8px">Name That <em>Musical!</em></div>
+  <div class="muted small center" style="margin-bottom:6px">You're in the lobby!</div>
+  <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--gold2);margin:12px 0" id="player-name-show">Player</div>
+  <div class="muted small">Waiting for the host to start…</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 6: PLAYER GAME
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-player-game" class="screen pt-banner">
+  <div class="logo" style="font-size:1.4rem;margin-bottom:4px">Name That <em>Musical!</em></div>
+  <div class="round-pill">Round <span id="player-round-num">1</span> of <span id="player-round-total">10</span></div>
+  <div class="player-game-wrap">
+    <!-- Lyric cards -->
+    <div id="player-lyrics-area" style="display:flex;flex-direction:column;gap:10px"></div>
+    <!-- Answer section -->
+    <div class="card" id="player-answer-card">
+      <div class="card-title">Your Answer</div>
+      <div id="player-answer-content">
+        <div class="small muted" style="margin-bottom:12px">Lock in early for more points! Choose which lyric you needed.</div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Musical</label>
+          <select id="player-musical-sel" onchange="playerMusicalChange()">
+            <option value="">— Select musical —</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Song</label>
+          <select id="player-song-sel" onchange="playerSelChange()" disabled>
+            <option value="">— Select song —</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:8px">
+          <label>I needed this many lyrics (points)</label>
+          <div class="pts-row">
+            <div class="pts-btn dim" id="pbtn-5" onclick="selectPts(5)">
+              <span class="pts-btn-val">5</span>
+              <span class="pts-btn-lbl">Lyric 1</span>
+            </div>
+            <div class="pts-btn dim" id="pbtn-4" onclick="selectPts(4)">
+              <span class="pts-btn-val">4</span>
+              <span class="pts-btn-lbl">Lyric 2</span>
+            </div>
+            <div class="pts-btn dim" id="pbtn-3" onclick="selectPts(3)">
+              <span class="pts-btn-val">3</span>
+              <span class="pts-btn-lbl">Lyric 3</span>
+            </div>
+            <div class="pts-btn dim" id="pbtn-2" onclick="selectPts(2)">
+              <span class="pts-btn-val">2</span>
+              <span class="pts-btn-lbl">Lyric 4</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-gold btn-full" id="player-lock-btn" onclick="lockAnswer()" disabled>🔒 Lock In Answer</button>
+      </div>
+      <div id="player-locked-display" style="display:none">
+        <div class="locked-box">
+          <div>✅ Locked in!</div>
+          <div class="lbig" id="locked-musical-show">—</div>
+          <div class="lbig" id="locked-song-show">—</div>
+          <div class="lsub">Playing for <span id="locked-pts-show">—</span> pts</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 7: PLAYER ROUND RESULT
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-player-result" class="screen" style="justify-content:center;gap:0">
+  <div class="logo" style="font-size:1.5rem;margin-bottom:28px">Round Result</div>
+  <div class="card center" style="max-width:360px">
+    <div class="res-circle" id="res-circle">🎵</div>
+    <div class="res-pts" id="res-pts">+0</div>
+    <div class="res-total" id="res-total">Total: 0 pts</div>
+    <div class="answer-box" style="text-align:left;margin-bottom:10px">
+      <div class="a-label">✅ Correct Answer</div>
+      <div class="a-val" id="res-correct-musical">—</div>
+      <div class="a-val" id="res-correct-song" style="font-size:.9rem;margin-top:2px">—</div>
+    </div>
+    <div class="small muted" id="res-your-answer"></div>
+    <div class="sep"></div>
+    <div class="small muted">Waiting for next round…</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 8: LYRICS EDITOR (host only)
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-lyrics-editor" class="screen pt-banner">
+  <div style="width:100%;max-width:800px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+    <div class="logo" style="font-size:1.5rem">✏️ Lyrics Editor</div>
+    <button class="btn btn-outline btn-sm" onclick="go('screen-host-lobby')">← Back to Lobby</button>
+  </div>
+  <div class="small muted center" style="max-width:600px;margin-bottom:16px;line-height:1.6">
+    Paste the <strong style="color:var(--cream)">full lyrics</strong> of each song — the game will randomly pick 4 lines to use each round. Saves automatically to Firebase.
+  </div>
+  <input class="editor-filter" id="editor-search" placeholder="🔍 Filter songs…" oninput="filterEditor()" />
+  <div class="editor-grid" id="editor-grid"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 9: GAME ENDED
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-ended" class="screen" style="justify-content:center;gap:0">
+  <div class="logo" style="margin-bottom:6px">🏆 Game Over!</div>
+  <div class="muted small center">Thanks for playing!</div>
+  <div class="podium-wrap" id="final-podium"></div>
+  <div class="card" style="max-width:360px;width:100%" id="final-full-scores"></div>
+  <button class="btn btn-gold mt14" onclick="location.reload()">🔄 Play Again</button>
+</div>
+
+<!-- ════════════════════════ SCRIPT ════════════════════════ -->
+<script>
+// ══════════════════════════════════════════════
+//  FIREBASE CONFIG
+// ══════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey: "AIzaSyB9j3e0nLqCIfeL-MBuxGGySRH_GqBq2eU",
+  authDomain: "namethatmusical-4f26b.firebaseapp.com",
+  databaseURL: "https://namethatmusical-4f26b-default-rtdb.firebaseio.com",
+  projectId: "namethatmusical-4f26b",
+  storageBucket: "namethatmusical-4f26b.firebasestorage.app",
+  messagingSenderId: "52948074317",
+  appId: "1:52948074317:web:9af6e972fe9e3f05890104",
+  measurementId: "G-QZYE4G8LJ7"
+};
+
+const HOST_PASSWORD = "showtime"; // change this!
+
+// ══════════════════════════════════════════════
+//  SONG POOL (titles only — lyrics are entered
+//  via the built-in editor and saved to Firebase)
+// ══════════════════════════════════════════════
+const SONG_POOL = [
+  {musical:"Hamilton",song:"Alexander Hamilton"},
+  {musical:"Hamilton",song:"My Shot"},
+  {musical:"Hamilton",song:"The Room Where It Happens"},
+  {musical:"Hamilton",song:"You'll Be Back"},
+  {musical:"Hamilton",song:"Wait for It"},
+  {musical:"Hamilton",song:"Satisfied"},
+  {musical:"Hamilton",song:"Burn"},
+  {musical:"Hamilton",song:"Helpless"},
+  {musical:"Hamilton",song:"Guns and Ships"},
+  {musical:"Hamilton",song:"Dear Theodosia"},
+  {musical:"Hamilton",song:"Your Obedient Servant"},
+  {musical:"Hamilton",song:"Ten Duel Commandments"},
+  {musical:"Hamilton",song:"Non-Stop"},
+  {musical:"Hamilton",song:"The Schuyler Sisters"},
+  {musical:"Hamilton",song:"Say No to This"},
+  {musical:"Hamilton",song:"Sincerely, Me"},
+  {musical:"Dear Evan Hansen",song:"You Will Be Found"},
+  {musical:"Dear Evan Hansen",song:"If I Could Tell Her"},
+  {musical:"Dear Evan Hansen",song:"For Forever"},
+  {musical:"Dear Evan Hansen",song:"Good For You"},
+  {musical:"Dear Evan Hansen",song:"Anybody Have a Map?"},
+  {musical:"Be More Chill",song:"Two-Player Game"},
+  {musical:"Be More Chill",song:"Michael in the Bathroom"},
+  {musical:"Be More Chill",song:"Freeze Your Brain"},
+  {musical:"Be More Chill",song:"Loser Geek Whatever"},
+  {musical:"Be More Chill",song:"The Pitiful Children"},
+  {musical:"Be More Chill",song:"Be More Chill, Pt. 1"},
+  {musical:"Be More Chill",song:"The Smartphone Hour (Rich Set a Fire)"},
+  {musical:"Heathers: The Musical",song:"Candy Store"},
+  {musical:"Heathers: The Musical",song:"Dead Girl Walking"},
+  {musical:"Heathers: The Musical",song:"Beautiful"},
+  {musical:"Heathers: The Musical",song:"Fight for Me"},
+  {musical:"Heathers: The Musical",song:"Meant to Be Yours"},
+  {musical:"Heathers: The Musical",song:"My Dead Gay Son"},
+  {musical:"Heathers: The Musical",song:"Lifeboat"},
+  {musical:"Heathers: The Musical",song:"Big Fun"},
+  {musical:"Heathers: The Musical",song:"Our Love Is God"},
+  {musical:"Mean Girls",song:"Meet The Plastics"},
+  {musical:"Mean Girls",song:"World Burn"},
+  {musical:"Mean Girls",song:"Revenge Party"},
+  {musical:"Mean Girls",song:"Someone Gets Hurt"},
+  {musical:"Mean Girls",song:"Sexy"},
+  {musical:"SIX",song:"Ex-Wives"},
+  {musical:"SIX",song:"Heart of Stone"},
+  {musical:"SIX",song:"All You Wanna Do"},
+  {musical:"SIX",song:"Don't Lose Ur Head"},
+  {musical:"SIX",song:"Six"},
+  {musical:"SIX",song:"I Don't Need Your Love"},
+  {musical:"SIX",song:"No Way"},
+  {musical:"SIX",song:"Haus of Holbein"},
+  {musical:"SIX",song:"Get Down"},
+  {musical:"Wicked",song:"Defying Gravity"},
+  {musical:"Wicked",song:"Popular"},
+  {musical:"Wicked",song:"What Is This Feeling?"},
+  {musical:"Wicked",song:"For Good"},
+  {musical:"Wicked",song:"No Good Deed"},
+  {musical:"Wicked",song:"The Wizard And I"},
+  {musical:"Wicked",song:"One Short Day"},
+  {musical:"Wicked",song:"Dancing Through Life"},
+  {musical:"Wicked",song:"No One Mourns the Wicked"},
+  {musical:"Wicked",song:"The Girl in the Bubble"},
+  {musical:"Newsies",song:"Carrying The Banner"},
+  {musical:"Newsies",song:"Santa Fe"},
+  {musical:"Newsies",song:"Seize The Day"},
+  {musical:"Newsies",song:"King Of New York"},
+  {musical:"Newsies",song:"Watch What Happens"},
+  {musical:"Newsies",song:"The World Will Know"},
+  {musical:"Newsies",song:"Once And For All"},
+  {musical:"Mamma Mia!",song:"Dancing Queen"},
+  {musical:"Mamma Mia!",song:"The Winner Takes It All"},
+  {musical:"Mamma Mia!",song:"Mamma Mia"},
+  {musical:"Mamma Mia!",song:"Super Trouper"},
+  {musical:"Mamma Mia!",song:"Gimme! Gimme! Gimme!"},
+  {musical:"Mamma Mia!",song:"Slipping Through My Fingers"},
+  {musical:"Mamma Mia!",song:"Does Your Mother Know"},
+  {musical:"Mamma Mia!",song:"Angel Eyes"},
+  {musical:"Mamma Mia!",song:"Honey, Honey"},
+  {musical:"Mamma Mia!",song:"Voulez-Vous"},
+  {musical:"Frozen",song:"For the First Time in Forever"},
+  {musical:"Frozen",song:"Love Is an Open Door"},
+  {musical:"Frozen",song:"Do You Want to Build a Snowman?"},
+  {musical:"Frozen",song:"In Summer"},
+  {musical:"Frozen",song:"Monster"},
+  {musical:"Frozen",song:"Dangerous to Dream"},
+  {musical:"Frozen",song:"Fixer Upper"},
+  {musical:"Grease",song:"You're The One That I Want"},
+  {musical:"Grease",song:"Summer Nights"},
+  {musical:"Grease",song:"Hopelessly Devoted To You"},
+  {musical:"Grease",song:"Beauty School Dropout"},
+  {musical:"Beauty and the Beast",song:"Belle"},
+  {musical:"Beauty and the Beast",song:"Be Our Guest"},
+  {musical:"Beauty and the Beast",song:"Gaston"},
+  {musical:"Beauty and the Beast",song:"Evermore"},
+  {musical:"Beauty and the Beast",song:"Days In The Sun"},
+  {musical:"Little Shop of Horrors",song:"Skid Row (Downtown)"},
+  {musical:"Little Shop of Horrors",song:"Feed Me (Git It!)"},
+  {musical:"Little Shop of Horrors",song:"Suddenly, Seymour"},
+  {musical:"Les Misérables",song:"I Dreamed A Dream"},
+  {musical:"Les Misérables",song:"Do You Hear The People Sing?"},
+  {musical:"Les Misérables",song:"One Day More"},
+  {musical:"The Greatest Showman",song:"This Is Me"},
+  {musical:"The Greatest Showman",song:"A Million Dreams"},
+  {musical:"The Greatest Showman",song:"Never Enough"},
+  {musical:"The Greatest Showman",song:"The Other Side"},
+  {musical:"The Greatest Showman",song:"Tightrope"},
+  {musical:"Chicago",song:"Cell Block Tango"},
+  {musical:"Chicago",song:"We Both Reached For The Gun"},
+  {musical:"SpongeBob SquarePants: The Musical",song:"Best Day Ever"},
+  {musical:"SpongeBob SquarePants: The Musical",song:"Hero is My Middle Name"},
+  {musical:"SpongeBob SquarePants: The Musical",song:"Bikini Bottom Day"},
+  {musical:"SpongeBob SquarePants: The Musical",song:"[Just a] Simple Sponge"},
+  {musical:"Avenue Q",song:"If You Were Gay"},
+  {musical:"Avenue Q",song:"What Do You Do with a B.A. in English / It Sucks to Be Me"},
+  {musical:"Into the Woods",song:"Agony"},
+  {musical:"Into the Woods",song:"Last Midnight"},
+  {musical:"Into the Woods",song:"Your Fault"},
+  {musical:"Into the Woods",song:"On the Steps of the Palace"},
+  {musical:"The Little Mermaid",song:"Part of Your World"},
+  {musical:"Waitress",song:"When He Sees Me"},
+  {musical:"Waitress",song:"Opening Up"},
+  {musical:"Hadestown",song:"Wait for Me"},
+  {musical:"Hadestown",song:"Why We Build the Wall"},
+  {musical:"The Phantom of the Opera",song:"The Music Of The Night"},
+  {musical:"The Phantom of the Opera",song:"The Phantom Of The Opera"},
+  {musical:"Rent",song:"Seasons of Love"},
+  {musical:"Rent",song:"Blackout"},
+  {musical:"tick, tick… BOOM!",song:"30/90"},
+  {musical:"tick, tick… BOOM!",song:"Louder Than Words"},
+  {musical:"tick, tick… BOOM!",song:"Therapy"},
+  {musical:"Anastasia",song:"Once Upon a December"},
+  {musical:"Matilda the Musical",song:"Revolting Children"},
+  {musical:"Hairspray",song:"Good Morning Baltimore"},
+  {musical:"Hairspray",song:"Mama, I'm a Big Girl Now"},
+  {musical:"Shucked",song:"Corn"},
+  {musical:"Shucked",song:"Independently Owned"},
+  {musical:"Shucked",song:"We Love Jesus"},
+  {musical:"Shucked",song:"Best Man Wins"},
+  {musical:"EPIC: The Musical",song:"Warrior of the Mind"},
+  {musical:"EPIC: The Musical",song:"Get in the Water"},
+  {musical:"EPIC: The Musical",song:"Would You Fall in Love with Me Again"},
+  {musical:"The Guy Who Didn't Like Musicals",song:"The Guy Who Didn't Like Musicals"},
+  {musical:"The Guy Who Didn't Like Musicals",song:"Join Us (And Die)"},
+  {musical:"The Guy Who Didn't Like Musicals",song:"Show Stoppin Number"},
+  {musical:"The Guy Who Didn't Like Musicals",song:"America Is Great Again"},
+  {musical:"Beetlejuice",song:"Dead Mom"},
+  {musical:"Beetlejuice",song:"That Beautiful Sound"},
+  {musical:"Beetlejuice",song:"Say My Name"},
+  {musical:"Annie",song:"It's The Hard-Knock Life"},
+  {musical:"Annie",song:"Tomorrow"},
+  {musical:"The Book of Mormon",song:"You and Me (But Mostly Me)"},
+  {musical:"The Book of Mormon",song:"The Acceptance Song"},
+  {musical:"The Sound of Music",song:"Do-Re-Mi"},
+  {musical:"The Sound of Music",song:"My Favorite Things"},
+  {musical:"Fiddler on the Roof",song:"If I Were a Rich Man"},
+  {musical:"Anything Goes",song:"Anything Goes"},
+  {musical:"Anything Goes",song:"Gimme Gimme"},
+  {musical:"La La Land",song:"Another Day Of Sun"},
+  {musical:"La La Land",song:"A Lovely Night"},
+  {musical:"Legally Blonde",song:"Omigod You Guys"},
+  {musical:"Moulin Rouge!",song:"Lady Marmalade"},
+  {musical:"Something Rotten!",song:"Hard to Be the Bard"},
+  {musical:"Something Rotten!",song:"A Musical"},
+  {musical:"Something Rotten!",song:"God, I Hate Shakespeare"},
+  {musical:"Spring Awakening",song:"Mama Who Bore Me"},
+  {musical:"Hercules",song:"Zero To Hero"},
+  {musical:"Hercules",song:"I Won't Say (I'm In Love)"},
+  {musical:"Spies Are Forever",song:"Spies Are Forever"},
+  {musical:"Spies Are Forever",song:"No One Remembers Achmed"},
+  {musical:"Nerdy Prudes Must Die",song:"Nerdy Prudes Must Die"},
+  {musical:"Nerdy Prudes Must Die",song:"Hatchet Town"},
+];
+
+const MUSICALS = [...new Set(SONG_POOL.map(s => s.musical))].sort();
+function getSongs(m) { return SONG_POOL.filter(s => s.musical === m); }
+function songKey(musical, song) {
+  return (musical + '___' + song).replace(/[^a-zA-Z0-9_]/g, '_');
+}
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let db, gameRef, playersRef, roundRef, subsRef, lyricsRef;
+let gameCode = '', playerId = '', playerName = '', isHost = false;
+let currentRound = 0, totalRounds = 10;
+let revealedCount = 0;
+let currentSong = null; // {musical, song, lyrics:[]}
+let locked = false, chosenPts = null;
+let allLyrics = {}; // cached from Firebase
+let players = {};
+let lastRoundNum = -1;
+
+// ══════════════════════════════════════════════
+//  FIREBASE INIT
+// ══════════════════════════════════════════════
+function initFirebase() {
+  showBanner('connecting', '⟳ Connecting to Firebase…');
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    db = firebase.database();
+    db.ref('.info/connected').on('value', snap => {
+      if (snap.val() === true) {
+        showBanner('connected', '✓ Connected to Firebase');
+        setTimeout(() => hideBanner(), 2200);
+      } else {
+        showBanner('error', '✗ Firebase disconnected — check your connection');
+      }
+    });
+    lyricsRef = db.ref('lyrics');
+    lyricsRef.on('value', snap => { allLyrics = snap.val() || {}; });
+  } catch(e) {
+    showBanner('error', '✗ Firebase error: ' + e.message);
+  }
+}
+
+function showBanner(type, msg) {
+  const b = document.getElementById('fb-banner');
+  b.className = type;
+  b.querySelector('.fb-dot').className = 'fb-dot' + (type === 'connecting' ? ' pulse' : '');
+  document.getElementById('fb-banner-text').textContent = msg;
+}
+function hideBanner() {
+  document.getElementById('fb-banner').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ══════════════════════════════════════════════
+//  HOST AUTH
+// ══════════════════════════════════════════════
+function clickHost() {
+  document.getElementById('host-pw-error').style.display = 'none';
+  document.getElementById('host-pw-input').value = '';
+  document.getElementById('host-modal').classList.remove('hidden');
+}
+function hideHostModal() {
+  document.getElementById('host-modal').classList.add('hidden');
+}
+function checkHostPw() {
+  const pw = document.getElementById('host-pw-input').value;
+  if (pw === HOST_PASSWORD) {
+    hideHostModal();
+    startHostLobby();
+  } else {
+    document.getElementById('host-pw-error').style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  HOST: LOBBY SETUP
+// ══════════════════════════════════════════════
+function startHostLobby() {
+  isHost = true;
+  gameCode = Math.random().toString(36).substring(2,7).toUpperCase();
+  gameRef    = db.ref('games/' + gameCode);
+  playersRef = db.ref('games/' + gameCode + '/players');
+  roundRef   = db.ref('games/' + gameCode + '/round');
+  subsRef    = db.ref('games/' + gameCode + '/submissions');
+
+  gameRef.set({ status: 'lobby', round: { number: 1, total: totalRounds, revealed: 0, ready: false, answerShown: false } });
+
+  document.getElementById('lobby-code').textContent = gameCode;
+  document.getElementById('qrcode').innerHTML = '';
+  const joinUrl = location.href.split('?')[0] + '?code=' + gameCode;
+  document.getElementById('join-url-text').textContent = joinUrl;
+  new QRCode(document.getElementById('qrcode'), { text: joinUrl, width: 148, height: 148, colorDark:'#0e0b14', colorLight:'#ffffff' });
+
+  // Populate musical dropdown
+  const ms = document.getElementById('host-musical-sel');
+  ms.innerHTML = '<option value="">— Choose a musical —</option>';
+  MUSICALS.forEach(m => { const o=document.createElement('option'); o.value=o.textContent=m; ms.appendChild(o); });
+
+  playersRef.on('value', snap => {
+    players = snap.val() || {};
+    renderLobbyPlayers();
+    renderHostScoreboard();
+  });
+  subsRef.on('value', snap => renderSubs(snap.val()));
+
+  go('screen-host-lobby');
+  buildLyricsEditor();
+}
+
+function renderLobbyPlayers() {
+  const list = document.getElementById('lobby-player-list');
+  const arr = Object.values(players);
+  document.getElementById('lobby-count').textContent = arr.length + ' joined';
+  if (!arr.length) { list.innerHTML = '<div class="no-players">Share the code or QR — players will appear here!</div>'; return; }
+  list.innerHTML = arr.map(p => `
+    <div class="chip">
+      <div class="chip-av">${esc(p.name)[0].toUpperCase()}</div>
+      <div class="chip-name">${esc(p.name)}</div>
+      <div class="chip-score">${p.score||0} pts</div>
+    </div>`).join('');
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(document.getElementById('join-url-text').textContent)
+    .then(() => alert('Link copied!'));
+}
+
+// ══════════════════════════════════════════════
+//  HOST: START GAME
+// ══════════════════════════════════════════════
+function startGame() {
+  if (!Object.keys(players).length) { alert('Wait for at least one player to join!'); return; }
+  gameRef.update({ status: 'playing' });
+  currentRound = 1;
+  document.getElementById('host-round-num').textContent = 1;
+  document.getElementById('host-round-total').textContent = totalRounds;
+  go('screen-host-game');
+  pushRoundState({ number:1, total:totalRounds, revealed:0, ready:false, answerShown:false });
+}
+
+// ══════════════════════════════════════════════
+//  HOST: SONG SELECTION
+// ══════════════════════════════════════════════
+function hostMusicalChange() {
+  const m = document.getElementById('host-musical-sel').value;
+  const ss = document.getElementById('host-song-sel');
+  ss.innerHTML = '<option value="">— Choose a song —</option>';
+  ss.disabled = !m;
+  document.getElementById('load-song-btn').disabled = true;
+  if (!m) return;
+  getSongs(m).forEach(s => { const o=document.createElement('option'); o.value=o.textContent=s.song; ss.appendChild(o); });
+}
+function hostSongChange() {
+  document.getElementById('load-song-btn').disabled = !document.getElementById('host-song-sel').value;
+}
+
+function loadSong() {
+  const musical = document.getElementById('host-musical-sel').value;
+  const song    = document.getElementById('host-song-sel').value;
+  if (!musical || !song) return;
+
+  // Get lyrics from Firebase (already cached in allLyrics)
+  const key = songKey(musical, song);
+  const storedLyrics = allLyrics[key];
+  const allLines = (storedLyrics && storedLyrics.lines) ? storedLyrics.lines : [];
+
+  if (allLines.length < 4) {
+    alert('Not enough lyrics for "' + song + '".\n\nOpen the Lyrics Editor from the lobby and paste the full song lyrics (need at least 4 lines of 15+ characters).');
+    return;
+  }
+
+  // Randomly pick 4 distinct lines from the full pool
+  const pool = [...allLines];
+  const chosen = [];
+  while (chosen.length < 4 && pool.length > 0) {
+    const idx = Math.floor(Math.random() * pool.length);
+    chosen.push(pool.splice(idx, 1)[0]);
+  }
+
+  currentSong = { musical, song, lyrics: chosen };
+  revealedCount = 0;
+
+  subsRef.remove();
+  document.getElementById('lyrics-host-panel').style.display = 'block';
+  document.getElementById('host-song-label').textContent = song;
+  document.getElementById('host-answer-reveal').style.display = 'none';
+  document.getElementById('host-sub-list').innerHTML = '<div class="muted small" style="padding:8px 0">Waiting for players to lock in…</div>';
+
+  renderHostLyrics();
+  pushRoundState({ number:currentRound, total:totalRounds, revealed:0, ready:true, answerShown:false, musical, song, lyrics:chosen });
+}
+
+function renderHostLyrics() {
+  const pts = [5,4,3,2];
+  document.getElementById('host-lyrics-area').innerHTML = currentSong.lyrics.map((l,i) => `
+    <div class="lyric-reveal-card ${i<revealedCount?'revealed':'locked-card'}" id="hlc-${i}">
+      <div class="lyric-num-row">Lyric ${i+1} <span class="pt-chip">${pts[i]} pts</span> ${i<revealedCount?'✅':'🔒'}</div>
+      ${i<revealedCount
+        ? `<div class="lyric-body">${esc(l)}</div>`
+        : `<div class="lyric-hidden">Not yet revealed</div>`}
+    </div>`).join('');
+  document.getElementById('reveal-next-btn').disabled = revealedCount >= 4;
+}
+
+function revealNext() {
+  if (revealedCount >= 4) return;
+  revealedCount++;
+  renderHostLyrics();
+  pushRoundState({ number:currentRound, total:totalRounds, revealed:revealedCount, ready:true, answerShown:false, musical:currentSong.musical, song:currentSong.song, lyrics:currentSong.lyrics });
+}
+
+function showAnswer() {
+  if (!currentSong) return;
+  document.getElementById('host-answer-reveal').style.display = 'block';
+  document.getElementById('ans-musical-reveal').textContent = currentSong.musical;
+  document.getElementById('ans-song-reveal').textContent = currentSong.song;
+  pushRoundState({ number:currentRound, total:totalRounds, revealed:revealedCount, ready:true, answerShown:true, musical:currentSong.musical, song:currentSong.song, lyrics:currentSong.lyrics });
+  scoreRound();
+}
+
+function scoreRound() {
+  subsRef.once('value', snap => {
+    const subs = snap.val() || {};
+    Object.entries(subs).forEach(([pid, sub]) => {
+      if (sub.scored) return;
+      const correct = sub.musical === currentSong.musical && sub.song === currentSong.song;
+      if (correct) playersRef.child(pid+'/score').transaction(v => (v||0) + (sub.pts||1));
+      subsRef.child(pid).update({ correct, scored:true });
+    });
+  });
+}
+
+function nextRound() {
+  if (currentRound >= totalRounds) { endGame(); return; }
+  currentRound++;
+  currentSong = null; revealedCount = 0;
+  document.getElementById('host-round-num').textContent = currentRound;
+  document.getElementById('lyrics-host-panel').style.display = 'none';
+  document.getElementById('host-answer-reveal').style.display = 'none';
+  document.getElementById('host-musical-sel').value = '';
+  document.getElementById('host-song-sel').innerHTML = '<option value="">— Choose a song —</option>';
+  document.getElementById('host-song-sel').disabled = true;
+  document.getElementById('load-song-btn').disabled = true;
+  subsRef.remove();
+  document.getElementById('host-sub-list').innerHTML = '<div class="muted small" style="padding:8px 0">Waiting for players to lock in…</div>';
+  pushRoundState({ number:currentRound, total:totalRounds, revealed:0, ready:false, answerShown:false });
+}
+
+function renderSubs(subs) {
+  const list = document.getElementById('host-sub-list');
+  if (!subs || !Object.keys(subs).length) {
+    list.innerHTML = '<div class="muted small" style="padding:8px 0">Waiting for players to lock in…</div>';
+    return;
+  }
+  list.innerHTML = Object.entries(subs).map(([pid,sub]) => {
+    const p = players[pid] || {name:'?'};
+    const cls = sub.scored ? (sub.correct?'correct':'wrong') : 'pending';
+    const ptsLabel = sub.scored ? (sub.correct?`+${sub.pts}`:'0') : `${sub.pts}pts`;
+    return `<div class="sub-item ${cls}">
+      <div class="sub-name">${esc(p.name)}</div>
+      <div class="sub-guess">${esc(sub.musical||'')} / ${esc(sub.song||'…')}</div>
+      <div class="sub-pts">${ptsLabel}</div>
+    </div>`;
+  }).join('');
+  renderHostScoreboard();
+}
+
+function renderHostScoreboard() {
+  const sorted = Object.entries(players).sort(([,a],[,b])=>(b.score||0)-(a.score||0));
+  document.getElementById('host-scoreboard').innerHTML = sorted.map(([,p],i) => `
+    <div class="score-row">
+      <div class="score-rank">${i+1}</div>
+      <div class="chip-av" style="width:26px;height:26px;font-size:.7rem">${esc(p.name)[0].toUpperCase()}</div>
+      <div style="flex:1;font-size:.88rem">${esc(p.name)}</div>
+      <div class="score-pts">${p.score||0}</div>
+    </div>`).join('');
+}
+
+function pushRoundState(state) { roundRef.set(state); }
+
+// ══════════════════════════════════════════════
+//  END GAME
+// ══════════════════════════════════════════════
+function endGame() {
+  gameRef.update({ status:'ended' });
+  const sorted = Object.values(players).sort((a,b)=>(b.score||0)-(a.score||0));
+  const podiumOrder = [sorted[1],sorted[0],sorted[2]].filter(Boolean);
+  const cls = ['p2','p1','p3'];
+  const medals = ['🥈','🥇','🥉'];
+  document.getElementById('final-podium').innerHTML = podiumOrder.map((p,i) => `
+    <div class="podium-col ${cls[i]}">
+      <div class="p-medal">${medals[i]}</div>
+      <div class="p-name">${esc(p.name)}</div>
+      <div class="p-pts">${p.score||0} pts</div>
+    </div>`).join('');
+  document.getElementById('final-full-scores').innerHTML = `
+    <div class="card-title">Final Scores</div>
+    ${sorted.map((p,i)=>`<div class="score-row"><div class="score-rank">${i+1}</div><div style="flex:1">${esc(p.name)}</div><div class="score-pts">${p.score||0}</div></div>`).join('')}`;
+  go('screen-ended');
+}
+
+// ══════════════════════════════════════════════
+//  PLAYER: JOIN
+// ══════════════════════════════════════════════
+function joinGame() {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  const name = document.getElementById('join-name').value.trim();
+  if (!code || !name) { showJoinErr('Please fill in both fields.'); return; }
+
+  const gRef = db.ref('games/' + code);
+  gRef.once('value').then(snap => {
+    if (!snap.exists()) { showJoinErr('Game not found. Check the code!'); return; }
+    gameCode = code;
+    playerName = name;
+    playerId = 'p_' + Math.random().toString(36).substring(2,10);
+
+    gameRef    = db.ref('games/' + gameCode);
+    playersRef = db.ref('games/' + gameCode + '/players');
+    roundRef   = db.ref('games/' + gameCode + '/round');
+    subsRef    = db.ref('games/' + gameCode + '/submissions');
+
+    playersRef.child(playerId).set({ name, score:0, joined:Date.now() });
+
+    document.getElementById('player-name-show').textContent = name;
+
+    // Populate player musical dropdown
+    const ms = document.getElementById('player-musical-sel');
+    ms.innerHTML = '<option value="">— Select musical —</option>';
+    MUSICALS.forEach(m => { const o=document.createElement('option'); o.value=o.textContent=m; ms.appendChild(o); });
+
+    go('screen-player-waiting');
+    listenAsPlayer();
+  }).catch(e => showJoinErr('Error: ' + e.message));
+}
+
+function showJoinErr(msg) {
+  const el = document.getElementById('join-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+// ══════════════════════════════════════════════
+//  PLAYER: LISTEN TO GAME STATE
+// ══════════════════════════════════════════════
+function listenAsPlayer() {
+  gameRef.child('status').on('value', snap => {
+    if (snap.val() === 'ended') { showPlayerEndScreen(); }
+  });
+
+  roundRef.on('value', snap => {
+    const r = snap.val();
+    if (!r) return;
+    document.getElementById('player-round-num').textContent = r.number;
+    document.getElementById('player-round-total').textContent = r.total;
+
+    // New round reset
+    if (r.number !== lastRoundNum) {
+      lastRoundNum = r.number;
+      locked = false; chosenPts = null;
+      resetPlayerAnswerUI();
+      currentRound = r.number;
+      // init 4 lyric cards
+      initPlayerLyricCards();
+    }
+
+    // Update lyric reveals
+    updatePlayerLyrics(r.revealed || 0, r.lyrics || []);
+
+    // Enable point buttons up to revealed count
+    updatePtButtons(r.revealed || 0);
+
+    if (r.answerShown && r.ready) {
+      // Show result after brief delay
+      setTimeout(() => showPlayerResult(r), 1400);
+    } else if (r.ready) {
+      const cur = document.querySelector('.screen.active');
+      if (!cur || cur.id !== 'screen-player-game') go('screen-player-game');
+    } else {
+      const cur = document.querySelector('.screen.active');
+      if (!cur || (cur.id !== 'screen-player-waiting' && cur.id !== 'screen-player-game')) go('screen-player-waiting');
+    }
+  });
+}
+
+function initPlayerLyricCards() {
+  const area = document.getElementById('player-lyrics-area');
+  area.innerHTML = '';
+  const pts = [5,4,3,2];
+  for (let i=0; i<4; i++) {
+    area.innerHTML += `
+      <div class="lyric-player-card" id="plc-${i}">
+        <div class="lyric-num-row">Lyric ${i+1} <span class="pt-chip">${pts[i]} pts</span></div>
+        <div class="lyric-hidden" id="plc-text-${i}">Not yet revealed…</div>
+      </div>`;
+  }
+}
+
+function updatePlayerLyrics(revealed, lyrics) {
+  for (let i=0; i<4; i++) {
+    const card = document.getElementById('plc-'+i);
+    const text = document.getElementById('plc-text-'+i);
+    if (!card) return;
+    if (i < revealed && lyrics[i]) {
+      card.classList.add('revealed');
+      text.className = 'lyric-body';
+      text.textContent = lyrics[i];
+    } else {
+      card.classList.remove('revealed');
+      text.className = 'lyric-hidden';
+      text.textContent = 'Not yet revealed…';
+    }
+  }
+}
+
+function updatePtButtons(revealed) {
+  const vals = [5,4,3,2];
+  vals.forEach((v,i) => {
+    const btn = document.getElementById('pbtn-'+v);
+    if (!btn) return;
+    if (i < revealed) btn.classList.remove('dim');
+    else btn.classList.add('dim');
+  });
+}
+
+// ══════════════════════════════════════════════
+//  PLAYER: ANSWER
+// ══════════════════════════════════════════════
+function resetPlayerAnswerUI() {
+  document.getElementById('player-answer-content').style.display = 'block';
+  document.getElementById('player-locked-display').style.display = 'none';
+  document.getElementById('player-musical-sel').value = '';
+  document.getElementById('player-song-sel').innerHTML = '<option value="">— Select song —</option>';
+  document.getElementById('player-song-sel').disabled = true;
+  document.querySelectorAll('.pts-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('player-lock-btn').disabled = true;
+  chosenPts = null;
+}
+
+function playerMusicalChange() {
+  const m = document.getElementById('player-musical-sel').value;
+  const ss = document.getElementById('player-song-sel');
+  ss.innerHTML = '<option value="">— Select song —</option>';
+  ss.disabled = !m;
+  if (m) getSongs(m).forEach(s => { const o=document.createElement('option'); o.value=o.textContent=s.song; ss.appendChild(o); });
+  checkLockReady();
+}
+function playerSelChange() { checkLockReady(); }
+function selectPts(v) {
+  if (locked) return;
+  chosenPts = v;
+  document.querySelectorAll('.pts-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('pbtn-'+v).classList.add('sel');
+  checkLockReady();
+}
+function checkLockReady() {
+  const m = document.getElementById('player-musical-sel').value;
+  const s = document.getElementById('player-song-sel').value;
+  document.getElementById('player-lock-btn').disabled = !(m && s && chosenPts && !locked);
+}
+
+function lockAnswer() {
+  if (locked) return;
+  const musical = document.getElementById('player-musical-sel').value;
+  const song    = document.getElementById('player-song-sel').value;
+  if (!musical || !song || !chosenPts) return;
+  locked = true;
+  subsRef.child(playerId).set({ musical, song, pts:chosenPts, locked:true, scored:false, correct:false, ts:Date.now() });
+  document.getElementById('player-answer-content').style.display = 'none';
+  document.getElementById('player-locked-display').style.display = 'block';
+  document.getElementById('locked-musical-show').textContent = musical;
+  document.getElementById('locked-song-show').textContent = song;
+  document.getElementById('locked-pts-show').textContent = chosenPts;
+}
+
+// ══════════════════════════════════════════════
+//  PLAYER: ROUND RESULT
+// ══════════════════════════════════════════════
+async function showPlayerResult(r) {
+  const cur = document.querySelector('.screen.active');
+  if (cur && cur.id === 'screen-player-result') return; // already showing
+
+  const [subSnap, scoreSnap] = await Promise.all([
+    subsRef.child(playerId).once('value'),
+    playersRef.child(playerId+'/score').once('value')
+  ]);
+  const sub = subSnap.val();
+  const totalScore = scoreSnap.val() || 0;
+
+  document.getElementById('res-correct-musical').textContent = r.musical || '—';
+  document.getElementById('res-correct-song').textContent    = r.song    || '—';
+  document.getElementById('res-total').textContent = 'Your total: ' + totalScore + ' pts';
+
+  const circle = document.getElementById('res-circle');
+  const ptsEl  = document.getElementById('res-pts');
+  if (!sub || !sub.locked) {
+    circle.className = 'res-circle res-noans'; circle.textContent = '😶';
+    ptsEl.textContent = '+0'; document.getElementById('res-your-answer').textContent = 'You didn\'t lock in this round.';
+  } else if (sub.correct) {
+    circle.className = 'res-circle res-correct'; circle.textContent = '🎉';
+    ptsEl.textContent = '+' + sub.pts; document.getElementById('res-your-answer').textContent = 'Your answer: ' + sub.musical + ' / ' + sub.song;
+  } else {
+    circle.className = 'res-circle res-wrong'; circle.textContent = '😬';
+    ptsEl.textContent = '+0'; document.getElementById('res-your-answer').textContent = 'Your answer: ' + (sub.musical||'?') + ' / ' + (sub.song||'?');
+  }
+  go('screen-player-result');
+}
+
+async function showPlayerEndScreen() {
+  const scoreSnap = await playersRef.child(playerId+'/score').once('value');
+  // Reuse host end screen logic but show only own score
+  const finalScore = scoreSnap.val() || 0;
+  document.getElementById('final-podium').innerHTML = `<div class="podium-col p1"><div class="p-medal">🎭</div><div class="p-name">${esc(playerName)}</div><div class="p-pts">${finalScore} pts</div></div>`;
+  document.getElementById('final-full-scores').innerHTML = `<div class="card-title">Your Final Score</div><div style="text-align:center;font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--gold);padding:16px">${finalScore}</div><div class="muted small center">points</div>`;
+  go('screen-ended');
+}
+
+// ══════════════════════════════════════════════
+//  LYRICS EDITOR
+// ══════════════════════════════════════════════
+function buildLyricsEditor() {
+  renderEditorGrid(SONG_POOL);
+}
+
+function filterEditor() {
+  const q = document.getElementById('editor-search').value.toLowerCase();
+  const filtered = SONG_POOL.filter(s =>
+    s.musical.toLowerCase().includes(q) || s.song.toLowerCase().includes(q)
+  );
+  renderEditorGrid(filtered);
+}
+
+function renderEditorGrid(songs) {
+  const grid = document.getElementById('editor-grid');
+  if (!songs.length) { grid.innerHTML = '<div class="muted center small" style="padding:24px">No songs match.</div>'; return; }
+  grid.innerHTML = '';
+  songs.forEach(s => {
+    const key = songKey(s.musical, s.song);
+    const stored = allLyrics[key] || {};
+    const lines = stored.lines || [];
+    const hasLyrics = lines.length >= 4;
+    const textVal = lines.join('\n').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const lineWord = lines.length === 1 ? 'line' : 'lines';
+    const statusClass = hasLyrics ? 'has-lyrics' : 'no-lyrics';
+    const statusText = hasLyrics ? ('\u2713 ' + lines.length + ' ' + lineWord) : '\u2717 No lyrics';
+
+    const row = document.createElement('div');
+    row.className = 'song-row';
+    row.id = 'erow-' + key;
+    row.innerHTML =
+      '<div class="song-row-header" id="ehdr-' + key + '">' +
+        '<div class="song-row-info">' +
+          '<div class="song-row-title">' + esc(s.song) + '</div>' +
+          '<div class="song-row-musical">' + esc(s.musical) + '</div>' +
+        '</div>' +
+        '<span class="song-row-status ' + statusClass + '" id="badge-' + key + '">' + statusText + '</span>' +
+      '</div>' +
+      '<div class="song-row-body" id="ebody-' + key + '">' +
+        '<p class="muted small" style="margin-bottom:10px;line-height:1.6">Paste the full song lyrics \u2014 one line per row. The game randomly picks 4 lines each round. Lines shorter than 15 characters are skipped.</p>' +
+        '<textarea id="eta-' + key + '"' +
+          ' placeholder="Paste full lyrics here, one line per row\u2026"' +
+          ' style="width:100%;min-height:220px;padding:12px 14px;background:var(--ink);border:1px solid var(--border);border-radius:var(--r);color:var(--cream);font-family:\'Outfit\',sans-serif;font-size:.85rem;line-height:1.65;outline:none;resize:vertical"' +
+        '>' + textVal + '</textarea>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">' +
+          '<div class="small muted" id="linecount-' + key + '">' + (lines.length ? lines.length + ' usable lines stored' : 'Nothing saved yet') + '</div>' +
+          '<div class="small muted">Saves automatically</div>' +
+        '</div>' +
+      '</div>';
+
+    // Attach click handler to header
+    row.querySelector('.song-row-header').addEventListener('click', () => toggleEditorRow(key));
+    // Attach input handler to textarea
+    const ta = row.querySelector('textarea');
+    ta.addEventListener('focus', () => ta.style.borderColor = 'var(--gold)');
+    ta.addEventListener('blur',  () => ta.style.borderColor = 'var(--border)');
+    ta.addEventListener('input', () => saveLyricBlob(key, ta.value));
+
+    grid.appendChild(row);
+  });
+}
+
+function toggleEditorRow(key) {
+  const body = document.getElementById('ebody-'+key);
+  const hdr  = document.getElementById('ehdr-'+key);
+  const open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  hdr.classList.toggle('open', !open);
+}
+
+let saveTimers = {};
+function saveLyricBlob(key, rawText) {
+  clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(() => {
+    // Split into lines, trim each, filter out blanks and very short lines (<15 chars)
+    const lines = rawText.split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length >= 15);
+    lyricsRef.child(key).update({ lines: lines }).then(() => {
+      allLyrics[key] = allLyrics[key] || {};
+      allLyrics[key].lines = lines;
+      const hasLyrics = lines.length >= 4;
+      const badge = document.getElementById('badge-' + key);
+      const counter = document.getElementById('linecount-' + key);
+      if (badge) {
+        badge.className = 'song-row-status ' + (hasLyrics ? 'has-lyrics' : 'no-lyrics');
+        badge.textContent = hasLyrics ? ('\u2713 ' + lines.length + ' lines') : '\u2717 No lyrics';
+      }
+      if (counter) counter.textContent = lines.length + ' usable lines stored';
+    });
+  }, 700);
+}
+
+// ══════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════
+window.addEventListener('load', () => {
+  initFirebase();
+  // Auto-fill game code from URL
+  const params = new URLSearchParams(location.search);
+  const code = params.get('code');
+  if (code) {
+    document.getElementById('join-code').value = code.toUpperCase();
+    go('screen-join');
+  }
+});
+</script>
+</body>
+</html>
