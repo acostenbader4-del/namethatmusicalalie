@@ -403,17 +403,7 @@ body > * { position: relative; z-index: 1; }
   <span id="fb-banner-text">Connecting to Firebase…</span>
 </div>
 
-<!-- ════════════════════════ HOST PASSWORD OVERLAY ══════════ -->
-<div id="host-modal" class="overlay hidden">
-  <div class="modal">
-    <div class="modal-title">🎬 Host Access</div>
-    <div class="modal-sub">Enter the host password to continue</div>
-    <div class="field"><input type="password" id="host-pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkHostPw()" /></div>
-    <button class="btn btn-gold btn-full" onclick="checkHostPw()">Enter</button>
-    <button class="btn btn-ghost btn-full mt8" onclick="hideHostModal()">Cancel</button>
-    <div id="host-pw-error" class="small muted center mt8" style="display:none;color:var(--red)">Wrong password</div>
-  </div>
-</div>
+<!-- host modal removed -->
 
 <!-- ═══════════════════════════════════════════════════════════
      SCREEN 1: LANDING
@@ -426,7 +416,7 @@ body > * { position: relative; z-index: 1; }
   </div>
   <div style="height:36px"></div>
   <div class="role-grid">
-    <div class="role-card" onclick="clickHost()">
+    <div class="role-card" onclick="startHostLobby()">
       <div class="role-icon">🎬</div>
       <div class="role-label">Host</div>
       <div class="role-desc">Run the game, reveal lyrics & control rounds</div>
@@ -669,13 +659,39 @@ body > * { position: relative; z-index: 1; }
 ═══════════════════════════════════════════════════════════ -->
 <div id="screen-lyrics-editor" class="screen pt-banner">
   <div style="width:100%;max-width:800px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-    <div class="logo" style="font-size:1.5rem">✏️ Lyrics Editor</div>
+    <div class="logo" style="font-size:1.5rem">✏️ Song &amp; Lyrics Editor</div>
     <button class="btn btn-outline btn-sm" onclick="go('screen-host-lobby')">← Back to Lobby</button>
   </div>
-  <div class="small muted center" style="max-width:600px;margin-bottom:16px;line-height:1.6">
-    Paste the <strong style="color:var(--cream)">full lyrics</strong> of each song — the game will randomly pick 4 lines to use each round. Saves automatically to Firebase.
+
+  <!-- ADD NEW SONG PANEL -->
+  <div class="card" style="max-width:800px;width:100%;margin-bottom:14px">
+    <div class="card-title" style="cursor:pointer" onclick="toggleAddPanel()">
+      <span>➕ Add a New Song</span>
+      <span class="small muted" id="add-panel-hint">click to expand</span>
+    </div>
+    <div id="add-song-panel" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="field" style="margin:0">
+          <label>Musical Name</label>
+          <input type="text" id="new-musical" placeholder="e.g. Hadestown" list="existing-musicals-list" />
+          <datalist id="existing-musicals-list"></datalist>
+        </div>
+        <div class="field" style="margin:0">
+          <label>Song Title</label>
+          <input type="text" id="new-song" placeholder="e.g. Wait for Me" />
+        </div>
+      </div>
+      <div id="add-song-error" class="small" style="color:var(--red);display:none;margin-bottom:8px"></div>
+      <button class="btn btn-gold btn-sm" onclick="addNewSong()">✓ Add Song to Database</button>
+      <div class="small muted" style="margin-top:8px;line-height:1.5">This adds the song permanently to Firebase — it will show up on all devices. You can then paste its lyrics below.</div>
+    </div>
   </div>
-  <input class="editor-filter" id="editor-search" placeholder="🔍 Filter songs…" oninput="filterEditor()" />
+
+  <!-- SONG LIST -->
+  <div class="small muted center" style="max-width:600px;margin-bottom:12px;line-height:1.6">
+    Paste the <strong style="color:var(--cream)">full lyrics</strong> of each song. The game randomly picks 4 lines per round. Click the ✏️ icon to fix a wrong musical name or song title.
+  </div>
+  <input class="editor-filter" id="editor-search" placeholder="🔍 Filter songs by title or musical…" oninput="filterEditor()" />
   <div class="editor-grid" id="editor-grid"></div>
 </div>
 
@@ -706,13 +722,13 @@ const FB_CONFIG = {
   measurementId: "G-QZYE4G8LJ7"
 };
 
-const HOST_PASSWORD = "showtime"; // change this!
+
 
 // ══════════════════════════════════════════════
 //  SONG POOL (titles only — lyrics are entered
 //  via the built-in editor and saved to Firebase)
 // ══════════════════════════════════════════════
-const SONG_POOL = [
+let SONG_POOL = [
   {musical:"Hamilton",song:"Alexander Hamilton"},
   {musical:"Hamilton",song:"My Shot"},
   {musical:"Hamilton",song:"The Room Where It Happens"},
@@ -885,7 +901,7 @@ const SONG_POOL = [
   {musical:"Nerdy Prudes Must Die",song:"Hatchet Town"},
 ];
 
-const MUSICALS = [...new Set(SONG_POOL.map(s => s.musical))].sort();
+function getMusicals() { return [...new Set(SONG_POOL.map(s => s.musical))].sort(); }
 function getSongs(m) { return SONG_POOL.filter(s => s.musical === m); }
 function songKey(musical, song) {
   return (musical + '___' + song).replace(/[^a-zA-Z0-9_]/g, '_');
@@ -894,7 +910,7 @@ function songKey(musical, song) {
 // ══════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════
-let db, gameRef, playersRef, roundRef, subsRef, lyricsRef;
+let db, gameRef, playersRef, roundRef, subsRef, lyricsRef, customSongsRef;
 let gameCode = '', playerId = '', playerName = '', isHost = false;
 let currentRound = 0, totalRounds = 10;
 let revealedCount = 0;
@@ -922,6 +938,21 @@ function initFirebase() {
     });
     lyricsRef = db.ref('lyrics');
     lyricsRef.on('value', snap => { allLyrics = snap.val() || {}; });
+    customSongsRef = db.ref('customSongs');
+    customSongsRef.on('value', snap => {
+      const custom = snap.val() || {};
+      // Remove old custom entries and re-merge cleanly
+      for (let i = SONG_POOL.length - 1; i >= 0; i--) {
+        if (SONG_POOL[i].custom) SONG_POOL.splice(i, 1);
+      }
+      Object.entries(custom).forEach(([fbKey, s]) => {
+        if (s && s.musical && s.song && !SONG_POOL.find(p => p.musical === s.musical && p.song === s.song)) {
+          SONG_POOL.push({ musical: s.musical, song: s.song, custom: true, fbKey });
+        }
+      });
+      refreshHostDropdown();
+      if (document.getElementById('screen-lyrics-editor').classList.contains('active')) filterEditor();
+    });
   } catch(e) {
     showBanner('error', '✗ Firebase error: ' + e.message);
   }
@@ -946,26 +977,7 @@ function go(id) {
   window.scrollTo(0, 0);
 }
 
-// ══════════════════════════════════════════════
-//  HOST AUTH
-// ══════════════════════════════════════════════
-function clickHost() {
-  document.getElementById('host-pw-error').style.display = 'none';
-  document.getElementById('host-pw-input').value = '';
-  document.getElementById('host-modal').classList.remove('hidden');
-}
-function hideHostModal() {
-  document.getElementById('host-modal').classList.add('hidden');
-}
-function checkHostPw() {
-  const pw = document.getElementById('host-pw-input').value;
-  if (pw === HOST_PASSWORD) {
-    hideHostModal();
-    startHostLobby();
-  } else {
-    document.getElementById('host-pw-error').style.display = 'block';
-  }
-}
+// host auth removed — no password needed
 
 // ══════════════════════════════════════════════
 //  HOST: LOBBY SETUP
@@ -986,10 +998,8 @@ function startHostLobby() {
   document.getElementById('join-url-text').textContent = joinUrl;
   new QRCode(document.getElementById('qrcode'), { text: joinUrl, width: 148, height: 148, colorDark:'#0e0b14', colorLight:'#ffffff' });
 
-  // Populate musical dropdown
-  const ms = document.getElementById('host-musical-sel');
-  ms.innerHTML = '<option value="">— Choose a musical —</option>';
-  MUSICALS.forEach(m => { const o=document.createElement('option'); o.value=o.textContent=m; ms.appendChild(o); });
+  // Populate musical dropdown (refreshed again when custom songs load)
+  refreshHostDropdown();
 
   playersRef.on('value', snap => {
     players = snap.val() || {};
@@ -1018,6 +1028,15 @@ function renderLobbyPlayers() {
 function copyLink() {
   navigator.clipboard.writeText(document.getElementById('join-url-text').textContent)
     .then(() => alert('Link copied!'));
+}
+
+function refreshHostDropdown() {
+  const ms = document.getElementById('host-musical-sel');
+  if (!ms) return;
+  const current = ms.value;
+  ms.innerHTML = '<option value="">— Choose a musical —</option>';
+  getMusicals().forEach(m => { const o=document.createElement('option'); o.value=o.textContent=m; ms.appendChild(o); });
+  if (current) ms.value = current;
 }
 
 // ══════════════════════════════════════════════
@@ -1221,7 +1240,7 @@ function joinGame() {
     // Populate player musical dropdown
     const ms = document.getElementById('player-musical-sel');
     ms.innerHTML = '<option value="">— Select musical —</option>';
-    MUSICALS.forEach(m => { const o=document.createElement('option'); o.value=o.textContent=m; ms.appendChild(o); });
+    getMusicals().forEach(m => { const o=document.createElement('option'); o.value=o.textContent=m; ms.appendChild(o); });
 
     go('screen-player-waiting');
     listenAsPlayer();
@@ -1412,6 +1431,17 @@ async function showPlayerEndScreen() {
 //  LYRICS EDITOR
 // ══════════════════════════════════════════════
 function buildLyricsEditor() {
+  // Delegated listener for edit buttons (attached once)
+  const grid = document.getElementById('editor-grid');
+  if (!grid._editListenerAttached) {
+    grid._editListenerAttached = true;
+    grid.addEventListener('click', e => {
+      const btn = e.target.closest('.edit-song-btn');
+      if (!btn) return;
+      e.stopPropagation();
+      openEditModal(btn.dataset.key, btn.dataset.musical, btn.dataset.song);
+    });
+  }
   renderEditorGrid(SONG_POOL);
 }
 
@@ -1447,6 +1477,7 @@ function renderEditorGrid(songs) {
           '<div class="song-row-musical">' + esc(s.musical) + '</div>' +
         '</div>' +
         '<span class="song-row-status ' + statusClass + '" id="badge-' + key + '">' + statusText + '</span>' +
+        '<button class="edit-song-btn btn btn-ghost btn-sm" style="margin-left:8px;font-size:1rem;padding:4px 8px" title="Edit musical / song name" data-key="' + key + '" data-musical="' + esc(s.musical) + '" data-song="' + esc(s.song) + '">\u270f\ufe0f</button>' +
       '</div>' +
       '<div class="song-row-body" id="ebody-' + key + '">' +
         '<p class="muted small" style="margin-bottom:10px;line-height:1.6">Paste the full song lyrics \u2014 one line per row. The game randomly picks 4 lines each round. Lines shorter than 15 characters are skipped.</p>' +
@@ -1503,6 +1534,167 @@ function saveLyricBlob(key, rawText) {
   }, 700);
 }
 
+
+// ══════════════════════════════════════════════
+//  EDITOR: ADD NEW SONG
+// ══════════════════════════════════════════════
+function toggleAddPanel() {
+  const panel = document.getElementById('add-song-panel');
+  const hint  = document.getElementById('add-panel-hint');
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  hint.textContent = open ? 'click to expand' : 'click to collapse';
+  if (!open) {
+    // Populate datalist with current musicals
+    const dl = document.getElementById('existing-musicals-list');
+    dl.innerHTML = '';
+    getMusicals().forEach(m => { const o = document.createElement('option'); o.value = m; dl.appendChild(o); });
+  }
+}
+
+function addNewSong() {
+  const musical = document.getElementById('new-musical').value.trim();
+  const song    = document.getElementById('new-song').value.trim();
+  const errEl   = document.getElementById('add-song-error');
+  errEl.style.display = 'none';
+
+  if (!musical || !song) { errEl.textContent = 'Please fill in both fields.'; errEl.style.display = 'block'; return; }
+  if (SONG_POOL.find(p => p.musical === musical && p.song === song)) {
+    errEl.textContent = 'That song already exists in the list!'; errEl.style.display = 'block'; return;
+  }
+
+  const newEntry = { musical, song };
+  const pushRef = customSongsRef.push();
+  pushRef.set(newEntry).then(() => {
+    SONG_POOL.push({ musical, song, custom: true, fbKey: pushRef.key });
+    document.getElementById('new-musical').value = '';
+    document.getElementById('new-song').value = '';
+    document.getElementById('add-song-panel').style.display = 'none';
+    document.getElementById('add-panel-hint').textContent = 'click to expand';
+    filterEditor(); // Refresh list
+    // Flash the new song row
+    setTimeout(() => {
+      const key = songKey(musical, song);
+      const row = document.getElementById('erow-' + key);
+      if (row) { row.style.outline = '2px solid var(--gold)'; setTimeout(() => row.style.outline = '', 2000); }
+    }, 100);
+  }).catch(e => { errEl.textContent = 'Firebase error: ' + e.message; errEl.style.display = 'block'; });
+}
+
+// ══════════════════════════════════════════════
+//  EDITOR: EDIT / DELETE SONG
+// ══════════════════════════════════════════════
+let editingKey = '';
+
+function openEditModal(key, musical, song) {
+  editingKey = key;
+  document.getElementById('edit-musical-input').value = musical;
+  document.getElementById('edit-song-input').value = song;
+  document.getElementById('edit-original-key').value = key;
+  document.getElementById('edit-original-musical').value = musical;
+  document.getElementById('edit-original-song').value = song;
+  document.getElementById('edit-error').style.display = 'none';
+
+  // Check if this is a custom song (has fbKey) or hardcoded
+  const entry = SONG_POOL.find(p => songKey(p.musical, p.song) === key);
+  document.getElementById('edit-is-custom').value = entry && entry.custom ? entry.fbKey || '' : '';
+
+  // Hide delete button for hardcoded songs (they don't have fbKey)
+  document.querySelector('#edit-modal .btn-danger').style.display = (entry && entry.custom) ? 'block' : 'none';
+  document.querySelector('#edit-modal .btn-danger + .small').style.display = (entry && entry.custom) ? 'block' : 'none';
+
+  // Populate musical datalist
+  const dl = document.getElementById('existing-musicals-list-edit');
+  dl.innerHTML = '';
+  getMusicals().forEach(m => { const o = document.createElement('option'); o.value = m; dl.appendChild(o); });
+
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.add('hidden');
+  editingKey = '';
+}
+
+function saveEditSong() {
+  const newMusical = document.getElementById('edit-musical-input').value.trim();
+  const newSong    = document.getElementById('edit-song-input').value.trim();
+  const origMusical = document.getElementById('edit-original-musical').value;
+  const origSong    = document.getElementById('edit-original-song').value;
+  const origKey     = document.getElementById('edit-original-key').value;
+  const fbKey       = document.getElementById('edit-is-custom').value;
+  const errEl = document.getElementById('edit-error');
+  errEl.style.display = 'none';
+
+  if (!newMusical || !newSong) { errEl.textContent = 'Both fields are required.'; errEl.style.display = 'block'; return; }
+  if (newMusical === origMusical && newSong === origSong) { closeEditModal(); return; }
+
+  // Check for collision
+  if (SONG_POOL.find(p => p.musical === newMusical && p.song === newSong && songKey(p.musical, p.song) !== origKey)) {
+    errEl.textContent = 'A song with that name already exists.'; errEl.style.display = 'block'; return;
+  }
+
+  const newKey = songKey(newMusical, newSong);
+
+  const doUpdate = () => {
+    // Move lyrics to new key in Firebase if key changed
+    if (newKey !== origKey) {
+      lyricsRef.child(origKey).once('value').then(snap => {
+        const data = snap.val();
+        if (data) {
+          lyricsRef.child(newKey).set(data);
+          lyricsRef.child(origKey).remove();
+          allLyrics[newKey] = data;
+          delete allLyrics[origKey];
+        }
+      });
+    }
+    // Update SONG_POOL entry
+    const idx = SONG_POOL.findIndex(p => p.musical === origMusical && p.song === origSong);
+    if (idx !== -1) { SONG_POOL[idx].musical = newMusical; SONG_POOL[idx].song = newSong; }
+
+    closeEditModal();
+    filterEditor();
+    // Flash updated row
+    setTimeout(() => {
+      const row = document.getElementById('erow-' + newKey);
+      if (row) { row.style.outline = '2px solid var(--gold)'; setTimeout(() => row.style.outline = '', 2000); }
+    }, 100);
+  };
+
+  if (fbKey) {
+    // It's a custom song — update Firebase record
+    customSongsRef.child(fbKey).update({ musical: newMusical, song: newSong }).then(doUpdate)
+      .catch(e => { errEl.textContent = 'Firebase error: ' + e.message; errEl.style.display = 'block'; });
+  } else {
+    // Hardcoded song — just update locally (persisted via Firebase lyrics key move)
+    doUpdate();
+  }
+}
+
+function deleteSong() {
+  const origMusical = document.getElementById('edit-original-musical').value;
+  const origSong    = document.getElementById('edit-original-song').value;
+  const origKey     = document.getElementById('edit-original-key').value;
+  const fbKey       = document.getElementById('edit-is-custom').value;
+
+  if (!confirm('Delete "' + origSong + '" from ' + origMusical + '? This will also delete any saved lyrics. This cannot be undone.')) return;
+
+  // Remove from SONG_POOL
+  const idx = SONG_POOL.findIndex(p => p.musical === origMusical && p.song === origSong);
+  if (idx !== -1) SONG_POOL.splice(idx, 1);
+
+  // Remove lyrics from Firebase
+  lyricsRef.child(origKey).remove();
+  delete allLyrics[origKey];
+
+  // Remove from customSongs if it's a custom entry
+  if (fbKey) customSongsRef.child(fbKey).remove();
+
+  closeEditModal();
+  filterEditor();
+}
+
 // ══════════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════════
@@ -1524,5 +1716,32 @@ window.addEventListener('load', () => {
   }
 });
 </script>
+
+<!-- ════════════════════════ EDIT SONG MODAL ════════════════ -->
+<div id="edit-modal" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Song Details</div>
+    <div class="modal-sub">Fix the musical name or song title. Updates everywhere instantly.</div>
+    <div class="field">
+      <label>Musical Name</label>
+      <input type="text" id="edit-musical-input" list="existing-musicals-list-edit" />
+      <datalist id="existing-musicals-list-edit"></datalist>
+    </div>
+    <div class="field">
+      <label>Song Title</label>
+      <input type="text" id="edit-song-input" />
+    </div>
+    <div id="edit-error" class="small" style="color:var(--red);display:none;margin-bottom:8px"></div>
+    <button class="btn btn-gold btn-full" onclick="saveEditSong()">✓ Save Changes</button>
+    <button class="btn btn-outline btn-full mt8" onclick="closeEditModal()">Cancel</button>
+    <div class="sep"></div>
+    <button class="btn btn-danger btn-full btn-sm" onclick="deleteSong()">🗑 Delete This Song</button>
+    <div class="small muted center mt8">Deleting also removes all saved lyrics for this song.</div>
+    <input type="hidden" id="edit-original-key" />
+    <input type="hidden" id="edit-original-musical" />
+    <input type="hidden" id="edit-original-song" />
+    <input type="hidden" id="edit-is-custom" />
+  </div>
+</div>
 </body>
 </html>
