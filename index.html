@@ -313,7 +313,7 @@ body>*{position:relative;z-index:1;}
 <div id="screen-host-game" class="screen pt-banner">
   <div style="width:100%;max-width:500px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
     <div class="logo" style="font-size:1.2rem">Name That <em>Musical!</em></div>
-    <div class="round-pill" style="margin:0">Round <span id="host-round-num">1</span>/<span id="host-round-total">10</span></div>
+    <div class="round-pill" style="margin:0">Round <span id="host-round-num">1</span></div>
   </div>
 
   <!-- HOST ANSWER PEEK — always visible to host, hidden from players -->
@@ -347,7 +347,10 @@ body>*{position:relative;z-index:1;}
     <div class="card">
       <div class="card-title">
         <span>Submissions</span>
-        <button class="btn btn-pink btn-sm" id="next-round-btn" onclick="nextRound()" style="padding:6px 14px;font-size:.78rem">⏭ Next Round</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-pink btn-sm" onclick="nextRound()" style="padding:6px 14px;font-size:.78rem">⏭ Next Round</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmEndGame()" style="padding:6px 14px;font-size:.78rem">🏁 End Game</button>
+        </div>
       </div>
       <div id="host-answer-reveal" style="display:none;margin-bottom:12px">
         <div class="answer-box"><div class="a-label">Musical</div><div class="a-val" id="ans-musical-reveal">—</div></div>
@@ -376,7 +379,7 @@ body>*{position:relative;z-index:1;}
 <div id="screen-player-game" class="screen pt-banner">
   <div class="logo-alie">✨ Alie's</div>
   <div class="logo" style="font-size:1.3rem;margin-bottom:4px">Name That <em>Musical!</em></div>
-  <div class="round-pill">Round <span id="player-round-num">1</span> of <span id="player-round-total">10</span></div>
+  <div class="round-pill">Round <span id="player-round-num">1</span></div>
   <div class="player-game-wrap">
     <div id="player-lyrics-area" style="display:flex;flex-direction:column;gap:10px"></div>
     <div class="card" id="player-answer-card">
@@ -571,7 +574,7 @@ function songKey(musical,song){return(musical+'___'+song).replace(/[^a-zA-Z0-9_]
 
 let db,gameRef,playersRef,roundRef,subsRef,lyricsRef,customSongsRef,correctionsRef;
 let gameCode='',playerId='',playerName='',isHost=false;
-let currentRound=0,totalRounds=10,revealedCount=0;
+let currentRound=0,revealedCount=0;
 let currentSong=null,locked=false,lockedAtReveal=0;
 let allLyrics={},players={},lastRoundNum=-1,usedSongKeys=new Set();
 
@@ -650,9 +653,8 @@ function startGame(){
   gameRef.update({status:'playing'});
   currentRound=1;
   document.getElementById('host-round-num').textContent=1;
-  document.getElementById('host-round-total').textContent=totalRounds;
   go('screen-host-game');
-  pushRoundState({number:1,total:totalRounds,revealed:0,ready:false,answerShown:false});
+  pushRoundState({number:1,revealed:0,ready:false,answerShown:false});
   loadRandomSong();
 }
 
@@ -698,7 +700,7 @@ function loadRandomFrom(eligible){
   document.getElementById('host-answer-peek').style.display='block';
   for(let i=0;i<4;i++){const pip=document.getElementById('pip-'+i);if(pip)pip.classList.remove('active');}
   renderHostLyrics();
-  pushRoundState({number:currentRound,total:totalRounds,revealed:0,ready:true,answerShown:false,musical:currentSong.musical,song:currentSong.song,lyrics:chosen});
+  pushRoundState({number:currentRound,revealed:0,ready:true,answerShown:false,musical:currentSong.musical,song:currentSong.song,lyrics:chosen});
 }
 
 function renderHostLyrics(){
@@ -716,7 +718,7 @@ function revealNext(){
   revealedCount++;
   for(let i=0;i<revealedCount;i++){const pip=document.getElementById('pip-'+i);if(pip)pip.classList.add('active');}
   renderHostLyrics();
-  pushRoundState({number:currentRound,total:totalRounds,revealed:revealedCount,ready:true,answerShown:false,musical:currentSong.musical,song:currentSong.song,lyrics:currentSong.lyrics});
+  pushRoundState({number:currentRound,revealed:revealedCount,ready:true,answerShown:false,musical:currentSong.musical,song:currentSong.song,lyrics:currentSong.lyrics});
 }
 
 function showAnswer(){
@@ -724,7 +726,7 @@ function showAnswer(){
   document.getElementById('host-answer-reveal').style.display='block';
   document.getElementById('ans-musical-reveal').textContent=currentSong.musical;
   document.getElementById('ans-song-reveal').textContent=currentSong.song;
-  pushRoundState({number:currentRound,total:totalRounds,revealed:revealedCount,ready:true,answerShown:true,musical:currentSong.musical,song:currentSong.song,lyrics:currentSong.lyrics});
+  pushRoundState({number:currentRound,revealed:revealedCount,ready:true,answerShown:true,musical:currentSong.musical,song:currentSong.song,lyrics:currentSong.lyrics});
   scoreRound();
 }
 
@@ -741,8 +743,12 @@ function scoreRound(){
   });
 }
 
+function confirmEndGame(){
+  if(!confirm('End the game and show final scores?'))return;
+  endGame();
+}
+
 function nextRound(){
-  if(currentRound>=totalRounds){endGame();return;}
   currentRound++;
   currentSong=null;revealedCount=0;
   document.getElementById('host-round-num').textContent=currentRound;
@@ -751,7 +757,7 @@ function nextRound(){
   subsRef.remove();
   document.getElementById('host-sub-list').innerHTML='<div class="muted small" style="padding:8px 0">Waiting for players…</div>';
   document.getElementById('host-lyrics-area').innerHTML='';
-  pushRoundState({number:currentRound,total:totalRounds,revealed:0,ready:false,answerShown:false});
+  pushRoundState({number:currentRound,revealed:0,ready:false,answerShown:false});
   loadRandomSong();
 }
 
@@ -834,7 +840,6 @@ function listenAsPlayer(){
   roundRef.on('value',snap=>{
     const r=snap.val();if(!r)return;
     document.getElementById('player-round-num').textContent=r.number;
-    document.getElementById('player-round-total').textContent=r.total;
     if(r.number!==lastRoundNum){lastRoundNum=r.number;locked=false;lockedAtReveal=0;resetPlayerAnswerUI();currentRound=r.number;initPlayerLyricCards();}
     updatePlayerLyrics(r.revealed||0,r.lyrics||[]);
     if(r.answerShown&&r.ready){setTimeout(()=>showPlayerResult(r),1400);}
