@@ -83,14 +83,11 @@ body>*{position:relative;z-index:1;}
 .no-players{color:var(--muted);font-size:.82rem;text-align:center;padding:24px 0;}
 .count-badge{background:rgba(232,84,122,.14);border:1px solid var(--border);border-radius:100px;padding:3px 11px;font-size:.72rem;color:var(--rose2);}
 .game-layout{display:flex;flex-direction:column;gap:14px;width:100%;max-width:500px;}
-
-/* HOST ANSWER PEEK */
 .host-answer-peek{background:linear-gradient(135deg,rgba(245,200,66,.10) 0%,rgba(232,84,122,.08) 100%);border:1px solid rgba(245,200,66,.38);border-radius:var(--r2);padding:14px 18px;width:100%;max-width:500px;display:none;animation:peekIn .4s ease;margin-bottom:4px;}
 @keyframes peekIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .peek-label{font-size:.6rem;text-transform:uppercase;letter-spacing:2.5px;color:rgba(245,200,66,.65);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
 .peek-musical{font-size:.76rem;color:rgba(245,200,66,.55);margin-bottom:1px;font-weight:500;}
 .peek-song{font-family:'Playfair Display',serif;font-size:1.35rem;font-style:italic;color:var(--gold);text-shadow:0 0 20px rgba(245,200,66,.25);}
-
 .auto-song-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:20px 18px;width:100%;max-width:500px;}
 .song-loading{text-align:center;padding:16px;}
 .song-title-big{font-family:'Playfair Display',serif;font-size:1.35rem;color:var(--rose2);margin-bottom:4px;}
@@ -151,8 +148,6 @@ body>*{position:relative;z-index:1;}
 .reveal-progress{display:flex;gap:6px;margin-bottom:14px;}
 .reveal-pip{flex:1;height:5px;border-radius:10px;background:var(--border2);transition:background .3s;}
 .reveal-pip.active{background:linear-gradient(90deg,var(--rose),var(--rose2));}
-
-/* END SCREEN */
 #screen-ended{justify-content:flex-start;padding-top:36px;}
 .ended-header{text-align:center;margin-bottom:24px;}
 .ended-title{font-family:'Playfair Display',serif;font-size:clamp(2rem,8vw,2.8rem);font-weight:900;line-height:1.1;background:linear-gradient(135deg,var(--gold) 0%,var(--rose2) 60%,var(--rose3) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 24px rgba(245,200,66,.3));margin-bottom:4px;}
@@ -190,8 +185,6 @@ body>*{position:relative;z-index:1;}
 .fs-name{flex:1;font-size:.88rem;font-weight:500;}
 .fs-pts{font-weight:700;color:var(--rose2);font-size:.9rem;}
 .fs-you{background:rgba(232,84,122,.08);border-radius:8px;padding:9px 8px;}
-
-/* PLAYER END SCREEN */
 #screen-player-ended{justify-content:flex-start;padding-top:40px;}
 .player-end-hero{text-align:center;margin-bottom:24px;}
 .player-rank-circle{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(245,200,66,.15) 0%,rgba(232,84,122,.15) 100%);border:2px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 0 28px rgba(245,200,66,.15);}
@@ -199,7 +192,6 @@ body>*{position:relative;z-index:1;}
 .player-rank-label{font-size:.58rem;text-transform:uppercase;letter-spacing:2px;color:rgba(245,200,66,.65);}
 .player-score-big{font-family:'Playfair Display',serif;font-size:3.2rem;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--rose3),var(--rose));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .player-score-label{font-size:.72rem;color:var(--muted);margin-top:2px;letter-spacing:1px;}
-
 .sep{height:1px;background:var(--border);margin:14px 0;}
 .muted{color:var(--muted);}
 .small{font-size:.8rem;}
@@ -315,14 +307,11 @@ body>*{position:relative;z-index:1;}
     <div class="logo" style="font-size:1.2rem">Name That <em>Musical!</em></div>
     <div class="round-pill" style="margin:0">Round <span id="host-round-num">1</span></div>
   </div>
-
-  <!-- HOST ANSWER PEEK — always visible to host, hidden from players -->
   <div class="host-answer-peek" id="host-answer-peek">
     <div class="peek-label">🔐 HOST ONLY · CORRECT ANSWER</div>
     <div class="peek-musical" id="peek-musical-text">—</div>
     <div class="peek-song" id="peek-song-text">—</div>
   </div>
-
   <div class="game-layout">
     <div class="auto-song-card" id="auto-song-card">
       <div class="song-loading" id="song-loading">
@@ -510,7 +499,7 @@ body>*{position:relative;z-index:1;}
     <button class="btn btn-outline btn-full mt8" onclick="closeEditModal()">Cancel</button>
     <div class="sep"></div>
     <button class="btn btn-danger btn-full btn-sm" onclick="deleteSong()">🗑 Delete Song</button>
-    <div class="small muted center mt8">Also deletes saved lyrics.</div>
+    <div class="small muted center mt8">Permanently removes this song everywhere.</div>
     <input type="hidden" id="edit-original-key"/>
     <input type="hidden" id="edit-original-musical"/>
     <input type="hidden" id="edit-original-song"/>
@@ -521,115 +510,33 @@ body>*{position:relative;z-index:1;}
 <script>
 const FB_CONFIG={apiKey:"AIzaSyB9j3e0nLqCIfeL-MBuxGGySRH_GqBq2eU",authDomain:"namethatmusical-4f26b.firebaseapp.com",databaseURL:"https://namethatmusical-4f26b-default-rtdb.firebaseio.com",projectId:"namethatmusical-4f26b",storageBucket:"namethatmusical-4f26b.firebasestorage.app",messagingSenderId:"52948074317",appId:"1:52948074317:web:9af6e972fe9e3f05890104",measurementId:"G-QZYE4G8LJ7"};
 
+// ─────────────────────────────────────────────
+// SONG POOL — duplicates merged:
+//   "Heathers: The Musical" → "Heathers"
+//   "Frozen" → "Frozen: The Broadway Musical"
+//   "tick, tick… BOOM!" → "Tick, Tick… Boom!"
+//   "Heathers" songs de-duped
+// ─────────────────────────────────────────────
 let SONG_POOL=[
-{musical:"Hamilton",song:"Alexander Hamilton"},{musical:"Hamilton",song:"My Shot"},{musical:"Hamilton",song:"The Room Where It Happens"},{musical:"Hamilton",song:"You'll Be Back"},{musical:"Hamilton",song:"Wait for It"},{musical:"Hamilton",song:"Satisfied"},{musical:"Hamilton",song:"Burn"},{musical:"Hamilton",song:"Helpless"},{musical:"Hamilton",song:"Guns and Ships"},{musical:"Hamilton",song:"Dear Theodosia"},{musical:"Hamilton",song:"Your Obedient Servant"},{musical:"Hamilton",song:"Ten Duel Commandments"},{musical:"Hamilton",song:"Non-Stop"},{musical:"Hamilton",song:"The Schuyler Sisters"},{musical:"Hamilton",song:"Say No to This"},{musical:"Hamilton",song:"Sincerely, Me"},
-{musical:"Dear Evan Hansen",song:"You Will Be Found"},{musical:"Dear Evan Hansen",song:"If I Could Tell Her"},{musical:"Dear Evan Hansen",song:"For Forever"},{musical:"Dear Evan Hansen",song:"Good For You"},{musical:"Dear Evan Hansen",song:"Anybody Have a Map?"},
-{musical:"Be More Chill",song:"Two-Player Game"},{musical:"Be More Chill",song:"Michael in the Bathroom"},{musical:"Be More Chill",song:"Freeze Your Brain"},{musical:"Be More Chill",song:"Loser Geek Whatever"},{musical:"Be More Chill",song:"The Pitiful Children"},{musical:"Be More Chill",song:"Be More Chill, Pt. 1"},{musical:"Be More Chill",song:"The Smartphone Hour (Rich Set a Fire)"},
-{musical:"Heathers: The Musical",song:"Candy Store"},{musical:"Heathers: The Musical",song:"Dead Girl Walking"},{musical:"Heathers: The Musical",song:"Beautiful"},{musical:"Heathers: The Musical",song:"Fight for Me"},{musical:"Heathers: The Musical",song:"Meant to Be Yours"},{musical:"Heathers: The Musical",song:"My Dead Gay Son"},{musical:"Heathers: The Musical",song:"Lifeboat"},{musical:"Heathers: The Musical",song:"Big Fun"},{musical:"Heathers: The Musical",song:"Our Love Is God"},
-{musical:"Mean Girls",song:"Meet The Plastics"},{musical:"Mean Girls",song:"World Burn"},{musical:"Mean Girls",song:"Revenge Party"},{musical:"Mean Girls",song:"Someone Gets Hurt"},{musical:"Mean Girls",song:"Sexy"},
-{musical:"SIX",song:"Ex-Wives"},{musical:"SIX",song:"Heart of Stone"},{musical:"SIX",song:"All You Wanna Do"},{musical:"SIX",song:"Don't Lose Ur Head"},{musical:"SIX",song:"Six"},{musical:"SIX",song:"I Don't Need Your Love"},{musical:"SIX",song:"No Way"},{musical:"SIX",song:"Haus of Holbein"},{musical:"SIX",song:"Get Down"},
-{musical:"Wicked",song:"Defying Gravity"},{musical:"Wicked",song:"Popular"},{musical:"Wicked",song:"What Is This Feeling?"},{musical:"Wicked",song:"For Good"},{musical:"Wicked",song:"No Good Deed"},{musical:"Wicked",song:"The Wizard And I"},{musical:"Wicked",song:"One Short Day"},{musical:"Wicked",song:"Dancing Through Life"},{musical:"Wicked",song:"No One Mourns the Wicked"},{musical:"Wicked",song:"The Girl in the Bubble"},
-{musical:"Newsies",song:"Carrying The Banner"},{musical:"Newsies",song:"Santa Fe"},{musical:"Newsies",song:"Seize The Day"},{musical:"Newsies",song:"King Of New York"},{musical:"Newsies",song:"Watch What Happens"},{musical:"Newsies",song:"The World Will Know"},{musical:"Newsies",song:"Once And For All"},
-{musical:"Mamma Mia!",song:"Dancing Queen"},{musical:"Mamma Mia!",song:"The Winner Takes It All"},{musical:"Mamma Mia!",song:"Mamma Mia"},{musical:"Mamma Mia!",song:"Super Trouper"},{musical:"Mamma Mia!",song:"Gimme! Gimme! Gimme!"},{musical:"Mamma Mia!",song:"Slipping Through My Fingers"},{musical:"Mamma Mia!",song:"Does Your Mother Know"},{musical:"Mamma Mia!",song:"Angel Eyes"},{musical:"Mamma Mia!",song:"Honey, Honey"},{musical:"Mamma Mia!",song:"Voulez-Vous"},
-{musical:"Frozen",song:"For the First Time in Forever"},{musical:"Frozen",song:"Love Is an Open Door"},{musical:"Frozen",song:"Do You Want to Build a Snowman?"},{musical:"Frozen",song:"In Summer"},{musical:"Frozen",song:"Monster"},{musical:"Frozen",song:"Dangerous to Dream"},{musical:"Frozen",song:"Fixer Upper"},
-{musical:"Grease",song:"You're The One That I Want"},{musical:"Grease",song:"Summer Nights"},{musical:"Grease",song:"Hopelessly Devoted To You"},{musical:"Grease",song:"Beauty School Dropout"},
-{musical:"Beauty and the Beast",song:"Belle"},{musical:"Beauty and the Beast",song:"Be Our Guest"},{musical:"Beauty and the Beast",song:"Gaston"},{musical:"Beauty and the Beast",song:"Evermore"},{musical:"Beauty and the Beast",song:"Days In The Sun"},
-{musical:"Little Shop of Horrors",song:"Skid Row (Downtown)"},{musical:"Little Shop of Horrors",song:"Feed Me (Git It!)"},{musical:"Little Shop of Horrors",song:"Suddenly, Seymour"},
-{musical:"Les Misérables",song:"I Dreamed A Dream"},{musical:"Les Misérables",song:"Do You Hear The People Sing?"},{musical:"Les Misérables",song:"One Day More"},
-{musical:"The Greatest Showman",song:"This Is Me"},{musical:"The Greatest Showman",song:"A Million Dreams"},{musical:"The Greatest Showman",song:"Never Enough"},{musical:"The Greatest Showman",song:"The Other Side"},{musical:"The Greatest Showman",song:"Tightrope"},
-{musical:"Chicago",song:"Cell Block Tango"},{musical:"Chicago",song:"We Both Reached For The Gun"},
-{musical:"SpongeBob SquarePants: The Musical",song:"Best Day Ever"},{musical:"SpongeBob SquarePants: The Musical",song:"Hero is My Middle Name"},{musical:"SpongeBob SquarePants: The Musical",song:"Bikini Bottom Day"},{musical:"SpongeBob SquarePants: The Musical",song:"[Just a] Simple Sponge"},
-{musical:"Avenue Q",song:"If You Were Gay"},{musical:"Avenue Q",song:"What Do You Do with a B.A. in English / It Sucks to Be Me"},
-{musical:"Into the Woods",song:"Agony"},{musical:"Into the Woods",song:"Last Midnight"},{musical:"Into the Woods",song:"Your Fault"},{musical:"Into the Woods",song:"On the Steps of the Palace"},
-{musical:"The Little Mermaid",song:"Part of Your World"},
-{musical:"Waitress",song:"When He Sees Me"},{musical:"Waitress",song:"Opening Up"},
-{musical:"Hadestown",song:"Wait for Me"},{musical:"Hadestown",song:"Why We Build the Wall"},
-{musical:"The Phantom of the Opera",song:"The Music Of The Night"},{musical:"The Phantom of the Opera",song:"The Phantom Of The Opera"},
-{musical:"Rent",song:"Seasons of Love"},{musical:"Rent",song:"Blackout"},
-{musical:"tick, tick… BOOM!",song:"30/90"},{musical:"tick, tick… BOOM!",song:"Louder Than Words"},{musical:"tick, tick… BOOM!",song:"Therapy"},
-{musical:"Anastasia",song:"Once Upon a December"},{musical:"Matilda the Musical",song:"Revolting Children"},
-{musical:"Hairspray",song:"Good Morning Baltimore"},{musical:"Hairspray",song:"Mama, I'm a Big Girl Now"},
-{musical:"Shucked",song:"Corn"},{musical:"Shucked",song:"Independently Owned"},{musical:"Shucked",song:"We Love Jesus"},{musical:"Shucked",song:"Best Man Wins"},
-{musical:"EPIC: The Musical",song:"Warrior of the Mind"},{musical:"EPIC: The Musical",song:"Get in the Water"},{musical:"EPIC: The Musical",song:"Would You Fall in Love with Me Again"},
-{musical:"The Guy Who Didn't Like Musicals",song:"The Guy Who Didn't Like Musicals"},{musical:"The Guy Who Didn't Like Musicals",song:"Join Us (And Die)"},{musical:"The Guy Who Didn't Like Musicals",song:"Show Stoppin Number"},{musical:"The Guy Who Didn't Like Musicals",song:"America Is Great Again"},
-{musical:"Beetlejuice",song:"Dead Mom"},{musical:"Beetlejuice",song:"That Beautiful Sound"},{musical:"Beetlejuice",song:"Say My Name"},
-{musical:"Annie",song:"It's The Hard-Knock Life"},{musical:"Annie",song:"Tomorrow"},
-{musical:"The Book of Mormon",song:"You and Me (But Mostly Me)"},{musical:"The Book of Mormon",song:"The Acceptance Song"},
-{musical:"The Sound of Music",song:"Do-Re-Mi"},{musical:"The Sound of Music",song:"My Favorite Things"},
-{musical:"Fiddler on the Roof",song:"If I Were a Rich Man"},
-{musical:"Anything Goes",song:"Anything Goes"},{musical:"Anything Goes",song:"Gimme Gimme"},
-{musical:"La La Land",song:"Another Day Of Sun"},{musical:"La La Land",song:"A Lovely Night"},
-{musical:"Legally Blonde",song:"Omigod You Guys"},
-{musical:"Moulin Rouge!",song:"Lady Marmalade"},
-{musical:"Something Rotten!",song:"Hard to Be the Bard"},{musical:"Something Rotten!",song:"A Musical"},{musical:"Something Rotten!",song:"God, I Hate Shakespeare"},
-{musical:"Spring Awakening",song:"Mama Who Bore Me"},
-{musical:"Hercules",song:"Zero To Hero"},{musical:"Hercules",song:"I Won't Say (I'm In Love)"},
-{musical:"Spies Are Forever",song:"Spies Are Forever"},{musical:"Spies Are Forever",song:"No One Remembers Achmed"},
-{musical:"Nerdy Prudes Must Die",song:"Nerdy Prudes Must Die"},{musical:"Nerdy Prudes Must Die",song:"Hatchet Town"},
-// ── NEW SONGS ADDED ──
-{musical:"21 Chump Street",song:"One School"},
-{musical:"21 Chump Street",song:"The Money"},
-{musical:"21 Chump Street",song:"What the Heck I Gotta Do"},
-{musical:"36 Questions",song:"Our Word"},
-{musical:"A Chorus Line",song:"Opening: I Hope I Get It"},
-{musical:"Aladdin",song:"One Jump Ahead"},
-{musical:"Alice by Heart",song:"Isn't It a Trial?"},
-{musical:"Alice by Heart",song:"Your Shell of Grief"},
-{musical:"Anastasia",song:"Days in the Sun"},
-{musical:"Annie Get Your Gun",song:"Anything You Can Do"},
-{musical:"Assassins",song:"Unworthy of Your Love"},
-{musical:"Back to the Future: The Musical",song:"21st Century"},
-{musical:"Back to the Future: The Musical",song:"Wherever We're Going"},
-{musical:"Bad Cinderella",song:"Bad Cinderella"},
-{musical:"Be More Chill",song:"Be More Chill, Pt. 2"},
-{musical:"Be More Chill",song:"Loser, Geek, Whatever"},
-{musical:"Be More Chill",song:"The Pants Song"},
-{musical:"Be More Chill",song:"The Smartphone Hour"},
-{musical:"Be More Chill",song:"Voices in My Head"},
-{musical:"Beauty and the Beast",song:"How Does a Moment Last Forever"},
-{musical:"Beauty and the Beast",song:"The Mob Song"},
-{musical:"Beetlejuice",song:"Girl Scout"},
-{musical:"Beetlejuice",song:"What I Know Now"},
-{musical:"Carrie",song:"And Eve Was Weak"},
-{musical:"Carrie",song:"Carrie"},
-{musical:"Catch Me If You Can",song:"Goodbye"},
-{musical:"Cats",song:"Memory"},
-{musical:"Cats",song:"Mr. Mistoffelees"},
-{musical:"Charlie and the Chocolate Factory",song:"It Must Be Believed to Be Seen"},
-{musical:"Charlie and the Chocolate Factory",song:"Pure Imagination / Grandpa Joe (Reprise)"},
-{musical:"Charlie and the Chocolate Factory",song:"The Oompa Loompa Song / Auf Wiedersehen Augustus Gloop"},
-{musical:"Charlie and the Chocolate Factory",song:"The Queen of Pop"},
-{musical:"Charlie and the Chocolate Factory",song:"Veruca's Nutcracker Sweet"},
-{musical:"Charlie and the Chocolate Factory",song:"Vidiots"},
-{musical:"Charlie and the Chocolate Factory",song:"What Could Possibly Go Wrong?"},
-{musical:"Charlie and the Chocolate Factory",song:"If Your Father Were Here"},
-{musical:"Charlie and the Chocolate Factory",song:"More of Him to Love"},
-{musical:"Cinderella",song:"Stepsister's Lament"},
-{musical:"Cry-Baby",song:"Screw Loose"},
-{musical:"Death Becomes Her",song:"Don't Say I Didn't (Warn You)"},
-{musical:"Death Becomes Her",song:"For the Gaze"},
-{musical:"Death Becomes Her",song:"If You Want Perfection"},
-{musical:"Death Becomes Her",song:"Let's Run Away Together"},
-{musical:"Death Becomes Her",song:"Stefan's Turn"},
-{musical:"Death Becomes Her",song:"Tell Me, Ernest"},
-{musical:"Death Becomes Her",song:"That Was Then, This Is Now"},
-{musical:"Death Becomes Her",song:"The Plan"},
-{musical:"Finding Neverland",song:"We're All Made of Stars"},
-{musical:"Firebringer",song:"Chorn"},
-{musical:"Firebringer",song:"We Got Work to Do"},
-{musical:"Frozen: The Broadway Musical",song:"Dangerous to Dream"},
-{musical:"Frozen: The Broadway Musical",song:"Do You Want to Build a Snowman?"},
-{musical:"Frozen: The Broadway Musical",song:"Fixer Upper"},
-{musical:"Frozen: The Broadway Musical",song:"For the First Time in Forever (Reprise)"},
-{musical:"Frozen: The Broadway Musical",song:"I Can't Lose You"},
-{musical:"Frozen: The Broadway Musical",song:"In Summer"},
-{musical:"Frozen: The Broadway Musical",song:"Monster"},
-{musical:"Frozen: The Broadway Musical",song:"What Do You Know About Love?"},
-{musical:"Gentleman's Guide to Love and Murder",song:"I've Decided to Marry You"},
-{musical:"Groundhog Day",song:"Nobody Cares"},
-{musical:"Groundhog Day",song:"Seeing You"},
-{musical:"Hamilton",song:"A Winter's Ball"},
+// HAMILTON
+{musical:"Hamilton",song:"Alexander Hamilton"},
 {musical:"Hamilton",song:"Aaron Burr, Sir"},
+{musical:"Hamilton",song:"My Shot"},
+{musical:"Hamilton",song:"The Schuyler Sisters"},
+{musical:"Hamilton",song:"The Room Where It Happens"},
+{musical:"Hamilton",song:"You'll Be Back"},
+{musical:"Hamilton",song:"Wait for It"},
+{musical:"Hamilton",song:"Satisfied"},
+{musical:"Hamilton",song:"Burn"},
+{musical:"Hamilton",song:"Helpless"},
+{musical:"Hamilton",song:"Guns and Ships"},
+{musical:"Hamilton",song:"Dear Theodosia"},
+{musical:"Hamilton",song:"Your Obedient Servant"},
+{musical:"Hamilton",song:"Ten Duel Commandments"},
+{musical:"Hamilton",song:"Non-Stop"},
+{musical:"Hamilton",song:"Say No to This"},
+{musical:"Hamilton",song:"Sincerely, Me"},
+{musical:"Hamilton",song:"A Winter's Ball"},
 {musical:"Hamilton",song:"Cabinet Battle #1"},
 {musical:"Hamilton",song:"Farmer Refuted"},
 {musical:"Hamilton",song:"First Burn"},
@@ -640,29 +547,97 @@ let SONG_POOL=[
 {musical:"Hamilton",song:"We Know"},
 {musical:"Hamilton",song:"What'd I Miss"},
 {musical:"Hamilton",song:"Yorktown"},
-{musical:"Heathers",song:"Beautiful"},
-{musical:"Heathers",song:"Big Fun"},
-{musical:"Heathers",song:"Blue"},
+// DEAR EVAN HANSEN
+{musical:"Dear Evan Hansen",song:"You Will Be Found"},
+{musical:"Dear Evan Hansen",song:"If I Could Tell Her"},
+{musical:"Dear Evan Hansen",song:"For Forever"},
+{musical:"Dear Evan Hansen",song:"Good For You"},
+{musical:"Dear Evan Hansen",song:"Anybody Have a Map?"},
+// BE MORE CHILL
+{musical:"Be More Chill",song:"Two-Player Game"},
+{musical:"Be More Chill",song:"Michael in the Bathroom"},
+{musical:"Be More Chill",song:"Freeze Your Brain"},
+{musical:"Be More Chill",song:"Loser Geek Whatever"},
+{musical:"Be More Chill",song:"The Pitiful Children"},
+{musical:"Be More Chill",song:"Be More Chill, Pt. 1"},
+{musical:"Be More Chill",song:"Be More Chill, Pt. 2"},
+{musical:"Be More Chill",song:"The Smartphone Hour (Rich Set a Fire)"},
+{musical:"Be More Chill",song:"The Pants Song"},
+{musical:"Be More Chill",song:"Voices in My Head"},
+// HEATHERS (merged — was "Heathers" + "Heathers: The Musical")
+{musical:"Heathers",song:"Candy Store"},
 {musical:"Heathers",song:"Dead Girl Walking"},
+{musical:"Heathers",song:"Beautiful"},
 {musical:"Heathers",song:"Fight for Me"},
-{musical:"Heathers",song:"Freeze Your Brain"},
-{musical:"Heathers",song:"Kindergarten Boyfriend"},
-{musical:"Heathers",song:"Lifeboat"},
 {musical:"Heathers",song:"Meant to Be Yours"},
 {musical:"Heathers",song:"My Dead Gay Son"},
-{musical:"Heathers",song:"Never Shut Up Again"},
+{musical:"Heathers",song:"Lifeboat"},
+{musical:"Heathers",song:"Big Fun"},
 {musical:"Heathers",song:"Our Love Is God"},
+{musical:"Heathers",song:"Blue"},
+{musical:"Heathers",song:"Freeze Your Brain"},
+{musical:"Heathers",song:"Kindergarten Boyfriend"},
+{musical:"Heathers",song:"Never Shut Up Again"},
 {musical:"Heathers",song:"Shine a Light"},
 {musical:"Heathers",song:"The Me Inside of Me"},
 {musical:"Heathers",song:"Yo Girl"},
 {musical:"Heathers",song:"You're Welcome"},
-{musical:"In the Heights",song:"Blackout"},
-{musical:"Into the Woods",song:"Hello, Little Girl"},
-{musical:"Into the Woods",song:"Prologue: Into the Woods"},
-{musical:"Joseph and the Amazing Technicolor Dreamcoat",song:"Jacob and Sons / Joseph's Coat"},
-{musical:"Kinky Boots",song:"Sex Is in the Heel"},
-{musical:"Kinky Boots",song:"The History of Wrong Guys"},
-{musical:"Legally Blonde",song:"There! Right There!"},
+// MEAN GIRLS
+{musical:"Mean Girls",song:"Meet The Plastics"},
+{musical:"Mean Girls",song:"World Burn"},
+{musical:"Mean Girls",song:"Revenge Party"},
+{musical:"Mean Girls",song:"Someone Gets Hurt"},
+{musical:"Mean Girls",song:"Sexy"},
+{musical:"Mean Girls",song:"Apex Predator"},
+{musical:"Mean Girls",song:"Candy Store"},
+{musical:"Mean Girls",song:"Do This Thing"},
+{musical:"Mean Girls",song:"Stupid with Love"},
+{musical:"Mean Girls",song:"Where Do You Belong?"},
+// SIX
+{musical:"SIX",song:"Ex-Wives"},
+{musical:"SIX",song:"Heart of Stone"},
+{musical:"SIX",song:"All You Wanna Do"},
+{musical:"SIX",song:"Don't Lose Ur Head"},
+{musical:"SIX",song:"Six"},
+{musical:"SIX",song:"I Don't Need Your Love"},
+{musical:"SIX",song:"No Way"},
+{musical:"SIX",song:"Haus of Holbein"},
+{musical:"SIX",song:"Get Down"},
+// WICKED
+{musical:"Wicked",song:"Defying Gravity"},
+{musical:"Wicked",song:"Popular"},
+{musical:"Wicked",song:"What Is This Feeling?"},
+{musical:"Wicked",song:"For Good"},
+{musical:"Wicked",song:"No Good Deed"},
+{musical:"Wicked",song:"The Wizard And I"},
+{musical:"Wicked",song:"One Short Day"},
+{musical:"Wicked",song:"Dancing Through Life"},
+{musical:"Wicked",song:"No One Mourns the Wicked"},
+{musical:"Wicked",song:"The Girl in the Bubble"},
+{musical:"Wicked",song:"Wonderful"},
+// NEWSIES
+{musical:"Newsies",song:"Carrying The Banner"},
+{musical:"Newsies",song:"Santa Fe"},
+{musical:"Newsies",song:"Seize The Day"},
+{musical:"Newsies",song:"King Of New York"},
+{musical:"Newsies",song:"Watch What Happens"},
+{musical:"Newsies",song:"The World Will Know"},
+{musical:"Newsies",song:"Once And For All"},
+{musical:"Newsies",song:"I Never Planned on You / Don't Come A-Knocking"},
+{musical:"Newsies",song:"Something to Believe In"},
+{musical:"Newsies",song:"That's Rich"},
+{musical:"Newsies",song:"The Bottom Line"},
+// MAMMA MIA!
+{musical:"Mamma Mia!",song:"Dancing Queen"},
+{musical:"Mamma Mia!",song:"The Winner Takes It All"},
+{musical:"Mamma Mia!",song:"Mamma Mia"},
+{musical:"Mamma Mia!",song:"Super Trouper"},
+{musical:"Mamma Mia!",song:"Gimme! Gimme! Gimme!"},
+{musical:"Mamma Mia!",song:"Slipping Through My Fingers"},
+{musical:"Mamma Mia!",song:"Does Your Mother Know"},
+{musical:"Mamma Mia!",song:"Angel Eyes"},
+{musical:"Mamma Mia!",song:"Honey, Honey"},
+{musical:"Mamma Mia!",song:"Voulez-Vous"},
 {musical:"Mamma Mia!",song:"Careful My Toe"},
 {musical:"Mamma Mia!",song:"I Have a Dream"},
 {musical:"Mamma Mia!",song:"Lay All Your Love on Me"},
@@ -670,32 +645,256 @@ let SONG_POOL=[
 {musical:"Mamma Mia!",song:"Our Last Summer"},
 {musical:"Mamma Mia!",song:"Take a Chance on Me"},
 {musical:"Mamma Mia!",song:"Thank You for the Music"},
+// MAMMA MIA! HERE WE GO AGAIN
 {musical:"Mamma Mia! Here We Go Again",song:"Andante, Andante"},
 {musical:"Mamma Mia! Here We Go Again",song:"One of Us"},
 {musical:"Mamma Mia! Here We Go Again",song:"Waterloo"},
 {musical:"Mamma Mia! Here We Go Again",song:"When I Kissed the Teacher"},
 {musical:"Mamma Mia! Here We Go Again",song:"Why Did It Have to Be Me?"},
-{musical:"Maybe Happy Ending",song:"Why Love"},
-{musical:"Maybe Happy Ending",song:"World Within My Room"},
-{musical:"Mean Girls",song:"Apex Predator"},
-{musical:"Mean Girls",song:"Candy Store"},
-{musical:"Mean Girls",song:"Do This Thing"},
-{musical:"Mean Girls",song:"Stupid with Love"},
-{musical:"Mean Girls",song:"Where Do You Belong?"},
+// FROZEN: THE BROADWAY MUSICAL (merged — was "Frozen" + "Frozen: The Broadway Musical")
+{musical:"Frozen",song:"For the First Time in Forever"},
+{musical:"Frozen",song:"Love Is an Open Door"},
+{musical:"Frozen",song:"Do You Want to Build a Snowman?"},
+{musical:"Frozen",song:"In Summer"},
+{musical:"Frozen",song:"Monster"},
+{musical:"Frozen",song:"Dangerous to Dream"},
+{musical:"Frozen",song:"Fixer Upper"},
+{musical:"Frozen",song:"For the First Time in Forever (Reprise)"},
+{musical:"Frozen",song:"I Can't Lose You"},
+{musical:"Frozen",song:"What Do You Know About Love?"},
+// GREASE
+{musical:"Grease",song:"You're The One That I Want"},
+{musical:"Grease",song:"Summer Nights"},
+{musical:"Grease",song:"Hopelessly Devoted To You"},
+{musical:"Grease",song:"Beauty School Dropout"},
+// BEAUTY AND THE BEAST
+{musical:"Beauty and the Beast",song:"Belle"},
+{musical:"Beauty and the Beast",song:"Be Our Guest"},
+{musical:"Beauty and the Beast",song:"Gaston"},
+{musical:"Beauty and the Beast",song:"Evermore"},
+{musical:"Beauty and the Beast",song:"Days In The Sun"},
+{musical:"Beauty and the Beast",song:"How Does a Moment Last Forever"},
+{musical:"Beauty and the Beast",song:"The Mob Song"},
+// LITTLE SHOP OF HORRORS
+{musical:"Little Shop of Horrors",song:"Skid Row (Downtown)"},
+{musical:"Little Shop of Horrors",song:"Feed Me (Git It!)"},
+{musical:"Little Shop of Horrors",song:"Suddenly, Seymour"},
+// LES MISÉRABLES
+{musical:"Les Misérables",song:"I Dreamed A Dream"},
+{musical:"Les Misérables",song:"Do You Hear The People Sing?"},
+{musical:"Les Misérables",song:"One Day More"},
+// THE GREATEST SHOWMAN
+{musical:"The Greatest Showman",song:"This Is Me"},
+{musical:"The Greatest Showman",song:"A Million Dreams"},
+{musical:"The Greatest Showman",song:"Never Enough"},
+{musical:"The Greatest Showman",song:"The Other Side"},
+{musical:"The Greatest Showman",song:"Tightrope"},
+// CHICAGO
+{musical:"Chicago",song:"Cell Block Tango"},
+{musical:"Chicago",song:"We Both Reached For The Gun"},
+// SPONGEBOB
+{musical:"SpongeBob SquarePants: The Musical",song:"Best Day Ever"},
+{musical:"SpongeBob SquarePants: The Musical",song:"Hero is My Middle Name"},
+{musical:"SpongeBob SquarePants: The Musical",song:"Bikini Bottom Day"},
+{musical:"SpongeBob SquarePants: The Musical",song:"[Just a] Simple Sponge"},
+{musical:"SpongeBob SquarePants: The Musical",song:"BFF"},
+{musical:"SpongeBob SquarePants: The Musical",song:"I'm Not a Loser"},
+{musical:"SpongeBob SquarePants: The Musical",song:"Super Sea Star Savior"},
+{musical:"SpongeBob SquarePants: The Musical",song:"When the Going Gets Tough"},
+{musical:"SpongeBob SquarePants: The Musical",song:"[I Guess I] Miss You"},
+// AVENUE Q
+{musical:"Avenue Q",song:"If You Were Gay"},
+{musical:"Avenue Q",song:"What Do You Do with a B.A. in English / It Sucks to Be Me"},
+// INTO THE WOODS
+{musical:"Into the Woods",song:"Agony"},
+{musical:"Into the Woods",song:"Last Midnight"},
+{musical:"Into the Woods",song:"Your Fault"},
+{musical:"Into the Woods",song:"On the Steps of the Palace"},
+{musical:"Into the Woods",song:"Hello, Little Girl"},
+{musical:"Into the Woods",song:"Prologue: Into the Woods"},
+// THE LITTLE MERMAID
+{musical:"The Little Mermaid",song:"Part of Your World"},
+// WAITRESS
+{musical:"Waitress",song:"When He Sees Me"},
+{musical:"Waitress",song:"Opening Up"},
+{musical:"Waitress",song:"Never Ever Getting Rid of Me"},
+{musical:"Waitress",song:"The Negative"},
+// HADESTOWN
+{musical:"Hadestown",song:"Wait for Me"},
+{musical:"Hadestown",song:"Why We Build the Wall"},
+// PHANTOM OF THE OPERA
+{musical:"The Phantom of the Opera",song:"The Music Of The Night"},
+{musical:"The Phantom of the Opera",song:"The Phantom Of The Opera"},
+// RENT
+{musical:"Rent",song:"Seasons of Love"},
+{musical:"Rent",song:"Blackout"},
+// TICK, TICK… BOOM! (merged — was "tick, tick… BOOM!" + "Tick, Tick… Boom!")
+{musical:"Tick, Tick… Boom!",song:"30/90"},
+{musical:"Tick, Tick… Boom!",song:"Louder Than Words"},
+{musical:"Tick, Tick… Boom!",song:"Therapy"},
+// ANASTASIA
+{musical:"Anastasia",song:"Once Upon a December"},
+{musical:"Anastasia",song:"Days in the Sun"},
+// MATILDA
+{musical:"Matilda the Musical",song:"Revolting Children"},
+// HAIRSPRAY
+{musical:"Hairspray",song:"Good Morning Baltimore"},
+{musical:"Hairspray",song:"Mama, I'm a Big Girl Now"},
+// SHUCKED
+{musical:"Shucked",song:"Corn"},
+{musical:"Shucked",song:"Independently Owned"},
+{musical:"Shucked",song:"We Love Jesus"},
+{musical:"Shucked",song:"Best Man Wins"},
+{musical:"Shucked",song:"Bad"},
+{musical:"Shucked",song:"Maybe Love"},
+{musical:"Shucked",song:"Somebody Will"},
+{musical:"Shucked",song:"Travelin' Song"},
+{musical:"Shucked",song:"Woman of the World"},
+// EPIC: THE MUSICAL
+{musical:"EPIC: The Musical",song:"Warrior of the Mind"},
+{musical:"EPIC: The Musical",song:"Get in the Water"},
+{musical:"EPIC: The Musical",song:"Would You Fall in Love with Me Again"},
+// THE GUY WHO DIDN'T LIKE MUSICALS
+{musical:"The Guy Who Didn't Like Musicals",song:"The Guy Who Didn't Like Musicals"},
+{musical:"The Guy Who Didn't Like Musicals",song:"Join Us (And Die)"},
+{musical:"The Guy Who Didn't Like Musicals",song:"Show Stoppin' Number"},
+{musical:"The Guy Who Didn't Like Musicals",song:"America Is Great Again"},
+{musical:"The Guy Who Didn't Like Musicals",song:"Let It Out"},
+{musical:"The Guy Who Didn't Like Musicals",song:"Not Your Seed"},
+{musical:"The Guy Who Didn't Like Musicals",song:"Show Me Your Hands"},
+{musical:"The Guy Who Didn't Like Musicals",song:"You Tied Up My Heart"},
+// BEETLEJUICE
+{musical:"Beetlejuice",song:"Dead Mom"},
+{musical:"Beetlejuice",song:"That Beautiful Sound"},
+{musical:"Beetlejuice",song:"Say My Name"},
+{musical:"Beetlejuice",song:"Girl Scout"},
+{musical:"Beetlejuice",song:"What I Know Now"},
+// ANNIE
+{musical:"Annie",song:"It's The Hard-Knock Life"},
+{musical:"Annie",song:"Tomorrow"},
+// THE BOOK OF MORMON
+{musical:"The Book of Mormon",song:"You and Me (But Mostly Me)"},
+{musical:"The Book of Mormon",song:"The Acceptance Song"},
+// THE SOUND OF MUSIC
+{musical:"The Sound of Music",song:"Do-Re-Mi"},
+{musical:"The Sound of Music",song:"My Favorite Things"},
+// FIDDLER ON THE ROOF
+{musical:"Fiddler on the Roof",song:"If I Were a Rich Man"},
+// ANYTHING GOES
+{musical:"Anything Goes",song:"Anything Goes"},
+{musical:"Anything Goes",song:"Gimme Gimme"},
+// LA LA LAND
+{musical:"La La Land",song:"Another Day Of Sun"},
+{musical:"La La Land",song:"A Lovely Night"},
+// LEGALLY BLONDE
+{musical:"Legally Blonde",song:"Omigod You Guys"},
+{musical:"Legally Blonde",song:"There! Right There!"},
+// MOULIN ROUGE!
+{musical:"Moulin Rouge!",song:"Lady Marmalade"},
+// SOMETHING ROTTEN!
+{musical:"Something Rotten!",song:"Hard to Be the Bard"},
+{musical:"Something Rotten!",song:"A Musical"},
+{musical:"Something Rotten!",song:"God, I Hate Shakespeare"},
+{musical:"Something Rotten!",song:"The View from Here"},
+// SPRING AWAKENING
+{musical:"Spring Awakening",song:"Mama Who Bore Me"},
+// HERCULES
+{musical:"Hercules",song:"Zero To Hero"},
+{musical:"Hercules",song:"I Won't Say (I'm In Love)"},
+// SPIES ARE FOREVER
+{musical:"Spies Are Forever",song:"Spies Are Forever"},
+{musical:"Spies Are Forever",song:"No One Remembers Achmed"},
+// NERDY PRUDES MUST DIE
+{musical:"Nerdy Prudes Must Die",song:"Nerdy Prudes Must Die"},
+{musical:"Nerdy Prudes Must Die",song:"Hatchet Town"},
 {musical:"Nerdy Prudes Must Die",song:"Dirty Girl"},
 {musical:"Nerdy Prudes Must Die",song:"If I Loved You"},
 {musical:"Nerdy Prudes Must Die",song:"Literal Monster"},
 {musical:"Nerdy Prudes Must Die",song:"The Summoning"},
-{musical:"Newsies",song:"I Never Planned on You / Don't Come A-Knocking"},
-{musical:"Newsies",song:"Something to Believe In"},
-{musical:"Newsies",song:"That's Rich"},
-{musical:"Newsies",song:"The Bottom Line"},
+// 21 CHUMP STREET
+{musical:"21 Chump Street",song:"One School"},
+{musical:"21 Chump Street",song:"The Money"},
+{musical:"21 Chump Street",song:"What the Heck I Gotta Do"},
+// 36 QUESTIONS
+{musical:"36 Questions",song:"Our Word"},
+// A CHORUS LINE
+{musical:"A Chorus Line",song:"Opening: I Hope I Get It"},
+// ALADDIN
+{musical:"Aladdin",song:"One Jump Ahead"},
+// ALICE BY HEART
+{musical:"Alice by Heart",song:"Isn't It a Trial?"},
+{musical:"Alice by Heart",song:"Your Shell of Grief"},
+// ANNIE GET YOUR GUN
+{musical:"Annie Get Your Gun",song:"Anything You Can Do"},
+// ASSASSINS
+{musical:"Assassins",song:"Unworthy of Your Love"},
+// BACK TO THE FUTURE
+{musical:"Back to the Future: The Musical",song:"21st Century"},
+{musical:"Back to the Future: The Musical",song:"Wherever We're Going"},
+// BAD CINDERELLA
+{musical:"Bad Cinderella",song:"Bad Cinderella"},
+// CARRIE
+{musical:"Carrie",song:"And Eve Was Weak"},
+{musical:"Carrie",song:"Carrie"},
+// CATCH ME IF YOU CAN
+{musical:"Catch Me If You Can",song:"Goodbye"},
+// CATS
+{musical:"Cats",song:"Memory"},
+{musical:"Cats",song:"Mr. Mistoffelees"},
+// CHARLIE AND THE CHOCOLATE FACTORY
+{musical:"Charlie and the Chocolate Factory",song:"It Must Be Believed to Be Seen"},
+{musical:"Charlie and the Chocolate Factory",song:"Pure Imagination / Grandpa Joe (Reprise)"},
+{musical:"Charlie and the Chocolate Factory",song:"The Oompa Loompa Song / Auf Wiedersehen Augustus Gloop"},
+{musical:"Charlie and the Chocolate Factory",song:"The Queen of Pop"},
+{musical:"Charlie and the Chocolate Factory",song:"Veruca's Nutcracker Sweet"},
+{musical:"Charlie and the Chocolate Factory",song:"Vidiots"},
+{musical:"Charlie and the Chocolate Factory",song:"What Could Possibly Go Wrong?"},
+{musical:"Charlie and the Chocolate Factory",song:"If Your Father Were Here"},
+{musical:"Charlie and the Chocolate Factory",song:"More of Him to Love"},
+// CINDERELLA
+{musical:"Cinderella",song:"Stepsister's Lament"},
+// CRY-BABY
+{musical:"Cry-Baby",song:"Screw Loose"},
+// DEATH BECOMES HER
+{musical:"Death Becomes Her",song:"Don't Say I Didn't (Warn You)"},
+{musical:"Death Becomes Her",song:"For the Gaze"},
+{musical:"Death Becomes Her",song:"If You Want Perfection"},
+{musical:"Death Becomes Her",song:"Let's Run Away Together"},
+{musical:"Death Becomes Her",song:"Stefan's Turn"},
+{musical:"Death Becomes Her",song:"Tell Me, Ernest"},
+{musical:"Death Becomes Her",song:"That Was Then, This Is Now"},
+{musical:"Death Becomes Her",song:"The Plan"},
+// FINDING NEVERLAND
+{musical:"Finding Neverland",song:"We're All Made of Stars"},
+// FIREBRINGER
+{musical:"Firebringer",song:"Chorn"},
+{musical:"Firebringer",song:"We Got Work to Do"},
+// GENTLEMAN'S GUIDE
+{musical:"Gentleman's Guide to Love and Murder",song:"I've Decided to Marry You"},
+// GROUNDHOG DAY
+{musical:"Groundhog Day",song:"Nobody Cares"},
+{musical:"Groundhog Day",song:"Seeing You"},
+// IN THE HEIGHTS
+{musical:"In the Heights",song:"Blackout"},
+// JOSEPH
+{musical:"Joseph and the Amazing Technicolor Dreamcoat",song:"Jacob and Sons / Joseph's Coat"},
+// KINKY BOOTS
+{musical:"Kinky Boots",song:"Sex Is in the Heel"},
+{musical:"Kinky Boots",song:"The History of Wrong Guys"},
+// MAYBE HAPPY ENDING
+{musical:"Maybe Happy Ending",song:"Why Love"},
+{musical:"Maybe Happy Ending",song:"World Within My Room"},
+// ONCE UPON A MATTRESS
 {musical:"Once Upon a Mattress",song:"Shy"},
+// PROM
 {musical:"PROM",song:"The Acceptance Song"},
 {musical:"PROM",song:"Tonight Belongs to You"},
+// PERCY JACKSON
 {musical:"Percy Jackson: The Lightning Thief",song:"Prologue / The Day I Got Expelled"},
 {musical:"Percy Jackson: The Lightning Thief",song:"The Campfire Song"},
+// RAGTIME
 {musical:"Ragtime",song:"Wheels of a Dream"},
+// RIDE THE CYCLONE
 {musical:"Ride the Cyclone",song:"It's Not a Game / It's Just a Ride"},
 {musical:"Ride the Cyclone",song:"Madeline"},
 {musical:"Ride the Cyclone",song:"Space Age Bachelor Man"},
@@ -704,64 +903,69 @@ let SONG_POOL=[
 {musical:"Ride the Cyclone",song:"The Ballad of Jane Doe"},
 {musical:"Ride the Cyclone",song:"The Uranium Suite"},
 {musical:"Ride the Cyclone",song:"What the World Needs"},
+// SCHOOL OF ROCK
 {musical:"School of Rock",song:"You're in the Band"},
+// SEUSSICAL
 {musical:"Seussical",song:"Notice Me, Horton"},
+// SHREK
 {musical:"Shrek the Musical",song:"I Know It's Today"},
 {musical:"Shrek the Musical",song:"Make a Move"},
-{musical:"Shucked",song:"Bad"},
-{musical:"Shucked",song:"Maybe Love"},
-{musical:"Shucked",song:"Somebody Will"},
-{musical:"Shucked",song:"Travelin' Song"},
-{musical:"Shucked",song:"Woman of the World"},
-{musical:"Something Rotten!",song:"The View from Here"},
-{musical:"SpongeBob SquarePants: The Musical",song:"BFF"},
-{musical:"SpongeBob SquarePants: The Musical",song:"I'm Not a Loser"},
-{musical:"SpongeBob SquarePants: The Musical",song:"Super Sea Star Savior"},
-{musical:"SpongeBob SquarePants: The Musical",song:"When the Going Gets Tough"},
-{musical:"SpongeBob SquarePants: The Musical",song:"[I Guess I] Miss You"},
+// TEEN BEACH MOVIE
 {musical:"Teen Beach Movie",song:"Falling for Ya"},
+// THE ADDAMS FAMILY
 {musical:"The Addams Family",song:"One Normal Night"},
+// THE GREAT GATSBY
 {musical:"The Great Gatsby",song:"New Money"},
-{musical:"The Guy Who Didn't Like Musicals",song:"Let It Out"},
-{musical:"The Guy Who Didn't Like Musicals",song:"Not Your Seed"},
-{musical:"The Guy Who Didn't Like Musicals",song:"Show Me Your Hands"},
-{musical:"The Guy Who Didn't Like Musicals",song:"Show Stoppin' Number"},
-{musical:"The Guy Who Didn't Like Musicals",song:"You Tied Up My Heart"},
+// THE MUPPETS
 {musical:"The Muppets",song:"Life's A Happy Song"},
 {musical:"The Muppets",song:"Man or Muppet"},
 {musical:"The Muppets",song:"Pictures in My Head"},
 {musical:"The Muppets",song:"Rainbow Connection"},
+// THE OUTSIDERS
 {musical:"The Outsiders",song:"Finale (Tulsa '67)"},
+// THE SECRET GARDEN
 {musical:"The Secret Garden",song:"How Could I Ever Know"},
+// THOROUGHLY MODERN MILLIE
 {musical:"Thoroughly Modern Millie",song:"Gimme Gimme"},
-{musical:"Tick, Tick\u2026 Boom!",song:"30/90"},
-{musical:"Tick, Tick\u2026 Boom!",song:"Louder Than Words"},
-{musical:"Tick, Tick\u2026 Boom!",song:"Therapy"},
+// TOOTSIE
 {musical:"Tootsie",song:"What's Gonna Happen"},
+// TRAIL TO OREGON
 {musical:"Trail to Oregon",song:"Gone to Oregon"},
 {musical:"Trail to Oregon",song:"Independence!"},
 {musical:"Trail to Oregon",song:"Pays to Be an Animal"},
 {musical:"Trail to Oregon",song:"Wagon on Fire"},
 {musical:"Trail to Oregon",song:"You Gotta Go"},
+// TUCK EVERLASTING
 {musical:"Tuck Everlasting",song:"Good Girl Winnie Foster"},
 {musical:"Tuck Everlasting",song:"Partner in Crime"},
+// TWISTED
 {musical:"Twisted",song:"If I Believed"},
 {musical:"Twisted",song:"No One Remembers Achmed"},
+// URINETOWN
 {musical:"Urinetown",song:"Run, Freedom, Run!"},
-{musical:"Waitress",song:"Never Ever Getting Rid of Me"},
-{musical:"Waitress",song:"The Negative"},
-{musical:"Wicked",song:"Wonderful"},
 ];
+
+// De-duplicate the pool (same musical+song)
+(function dedup(){
+  const seen=new Set();
+  SONG_POOL=SONG_POOL.filter(s=>{
+    const k=s.musical+'|||'+s.song;
+    if(seen.has(k))return false;
+    seen.add(k);return true;
+  });
+})();
 
 function getMusicals(){return[...new Set(SONG_POOL.map(s=>s.musical))].sort();}
 function getSongs(m){return SONG_POOL.filter(s=>s.musical===m);}
 function songKey(musical,song){return(musical+'___'+song).replace(/[^a-zA-Z0-9_]/g,'_');}
 
-let db,gameRef,playersRef,roundRef,subsRef,lyricsRef,customSongsRef,correctionsRef;
+let db,gameRef,playersRef,roundRef,subsRef,lyricsRef,customSongsRef,correctionsRef,deletedSongsRef;
 let gameCode='',playerId='',playerName='',isHost=false;
 let currentRound=0,revealedCount=0;
 let currentSong=null,locked=false,lockedAtReveal=0;
 let allLyrics={},players={},lastRoundNum=-1,usedSongKeys=new Set();
+// Set of "musical|||song" strings that have been permanently deleted
+let deletedSongSet=new Set();
 
 function initFirebase(){
   showBanner('connecting','⟳ Connecting…');
@@ -774,6 +978,23 @@ function initFirebase(){
     });
     lyricsRef=db.ref('lyrics');
     lyricsRef.on('value',snap=>{allLyrics=snap.val()||{};});
+
+    // ── DELETED SONGS: load permanently deleted list from Firebase ──
+    deletedSongsRef=db.ref('deletedSongs');
+    deletedSongsRef.on('value',snap=>{
+      deletedSongSet.clear();
+      const data=snap.val()||{};
+      Object.values(data).forEach(d=>{
+        if(d&&d.musical&&d.song) deletedSongSet.add(d.musical+'|||'+d.song);
+      });
+      // Remove any deleted songs from SONG_POOL
+      for(let i=SONG_POOL.length-1;i>=0;i--){
+        const s=SONG_POOL[i];
+        if(deletedSongSet.has(s.musical+'|||'+s.song)) SONG_POOL.splice(i,1);
+      }
+      if(document.getElementById('screen-lyrics-editor').classList.contains('active')) filterEditor();
+    });
+
     correctionsRef=db.ref('corrections');
     correctionsRef.on('value',snap=>{
       const corr=snap.val()||{};
@@ -787,10 +1008,12 @@ function initFirebase(){
       const custom=snap.val()||{};
       for(let i=SONG_POOL.length-1;i>=0;i--){if(SONG_POOL[i].custom)SONG_POOL.splice(i,1);}
       Object.entries(custom).forEach(([fbKey,s])=>{
-        if(s&&s.musical&&s.song&&!SONG_POOL.find(p=>p.musical===s.musical&&p.song===s.song))
+        if(s&&s.musical&&s.song
+          &&!SONG_POOL.find(p=>p.musical===s.musical&&p.song===s.song)
+          &&!deletedSongSet.has(s.musical+'|||'+s.song))
           SONG_POOL.push({musical:s.musical,song:s.song,custom:true,fbKey});
       });
-      if(document.getElementById('screen-lyrics-editor').classList.contains('active'))filterEditor();
+      if(document.getElementById('screen-lyrics-editor').classList.contains('active')) filterEditor();
     });
   }catch(e){showBanner('error','✗ Error: '+e.message);}
 }
@@ -1124,7 +1347,7 @@ async function showPlayerEndScreen(){
   go('screen-player-ended');
 }
 
-// LYRICS EDITOR
+// ─── LYRICS EDITOR ───
 function buildLyricsEditor(){
   const grid=document.getElementById('editor-grid');
   if(!grid._editListenerAttached){
@@ -1176,6 +1399,15 @@ function addNewSong(){
   const musical=document.getElementById('new-musical').value.trim();const song=document.getElementById('new-song').value.trim();const errEl=document.getElementById('add-song-error');errEl.style.display='none';
   if(!musical||!song){errEl.textContent='Please fill in both fields.';errEl.style.display='block';return;}
   if(SONG_POOL.find(p=>p.musical===musical&&p.song===song)){errEl.textContent='That song already exists!';errEl.style.display='block';return;}
+  // Also check it's not in the deleted list
+  if(deletedSongSet.has(musical+'|||'+song)){
+    // Remove from deleted list so it can be re-added
+    deletedSongsRef.once('value',snap=>{
+      const data=snap.val()||{};
+      Object.entries(data).forEach(([k,v])=>{if(v.musical===musical&&v.song===song)deletedSongsRef.child(k).remove();});
+    });
+    deletedSongSet.delete(musical+'|||'+song);
+  }
   const pushRef=customSongsRef.push();
   pushRef.set({musical,song}).then(()=>{
     SONG_POOL.push({musical,song,custom:true,fbKey:pushRef.key});
@@ -1213,15 +1445,51 @@ function saveEditSong(){
   if(fbKey){customSongsRef.child(fbKey).update({musical:newMusical,song:newSong}).then(doUpdate).catch(e=>{errEl.textContent='Firebase error: '+e.message;errEl.style.display='block';});}
   else{const entry=SONG_POOL.find(p=>p.musical===origMusical&&p.song===origSong);const corrKey=(entry&&entry._correctionKey)||correctionsRef.push().key;correctionsRef.child(corrKey).set({origMusical,origSong,newMusical,newSong,correctionKey:corrKey}).then(doUpdate).catch(e=>{errEl.textContent='Firebase error: '+e.message;errEl.style.display='block';});}
 }
+
 function deleteSong(){
-  const origMusical=document.getElementById('edit-original-musical').value;const origSong=document.getElementById('edit-original-song').value;
-  const origKey=document.getElementById('edit-original-key').value;const fbKey=document.getElementById('edit-is-custom').value;
-  if(!confirm('Delete "'+origSong+'" from '+origMusical+'? This cannot be undone.'))return;
-  const idx=SONG_POOL.findIndex(p=>p.musical===origMusical&&p.song===origSong);if(idx!==-1)SONG_POOL.splice(idx,1);
-  lyricsRef.child(origKey).remove();delete allLyrics[origKey];
-  if(fbKey)customSongsRef.child(fbKey).remove();
-  closeEditModal();filterEditor();
+  const origMusical=document.getElementById('edit-original-musical').value;
+  const origSong=document.getElementById('edit-original-song').value;
+  const origKey=document.getElementById('edit-original-key').value;
+  const fbKey=document.getElementById('edit-is-custom').value;
+  if(!confirm('Permanently delete "'+origSong+'" from '+origMusical+'?\n\nThis song will be removed everywhere and will NOT come back when the page reloads.'))return;
+
+  const promises=[];
+
+  // 1. Write to /deletedSongs so it never comes back
+  const delKey=deletedSongsRef.push().key;
+  promises.push(deletedSongsRef.child(delKey).set({musical:origMusical,song:origSong,deletedAt:Date.now()}));
+  deletedSongSet.add(origMusical+'|||'+origSong);
+
+  // 2. Remove lyrics
+  promises.push(lyricsRef.child(origKey).remove());
+  delete allLyrics[origKey];
+
+  // 3. Remove from customSongs if it's a custom song
+  if(fbKey) promises.push(customSongsRef.child(fbKey).remove());
+
+  // 4. Remove any corrections entry for this song
+  if(correctionsRef){
+    correctionsRef.once('value').then(snap=>{
+      const corrs=snap.val()||{};
+      Object.entries(corrs).forEach(([k,v])=>{
+        if((v.origMusical===origMusical&&v.origSong===origSong)||(v.newMusical===origMusical&&v.newSong===origSong))
+          correctionsRef.child(k).remove();
+      });
+    });
+  }
+
+  // 5. Remove from in-memory SONG_POOL
+  const idx=SONG_POOL.findIndex(p=>p.musical===origMusical&&p.song===origSong);
+  if(idx!==-1) SONG_POOL.splice(idx,1);
+
+  Promise.all(promises).then(()=>{
+    closeEditModal();
+    filterEditor();
+  }).catch(e=>{
+    alert('Error deleting song: '+e.message);
+  });
 }
+
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 window.addEventListener('load',()=>{
